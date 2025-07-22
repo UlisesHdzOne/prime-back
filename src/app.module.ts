@@ -1,11 +1,32 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ConfigModule } from '@nestjs/config';
+import configuration from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { SharedModule } from './shared/shared.module';
+import { I18nModule } from 'nestjs-i18n';
+
+import * as path from 'path';
 
 @Module({
-  imports: [PrismaModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'es',
+      loaderOptions: {
+        path: path.join(__dirname, '../i18n/'),
+        watch: true,
+      },
+    }),
+
+    PrismaModule,
+    AuthModule,
+    SharedModule,
+  ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

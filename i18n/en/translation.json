@@ -1,0 +1,5 @@
+{
+  "EMAIL_ALREADY_REGISTERED": "Try another email",
+  "USER_REGISTRATION_ATTEMPT": "Trying to register user",
+  "USER_REGISTERED_SUCCESS": "User successfully registered"
+}
