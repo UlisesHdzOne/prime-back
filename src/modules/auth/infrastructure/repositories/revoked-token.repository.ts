@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository';
+import { RevokedToken } from '../../domain/entities/revoked-token.entity';
 
 @Injectable()
 export class PrismaRevokedTokenRepository implements IRevokedTokenRepository {
@@ -10,6 +11,7 @@ export class PrismaRevokedTokenRepository implements IRevokedTokenRepository {
     await this.prisma.revokedToken.create({
       data: {
         token,
+        revokedAt: new Date(),
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 1 día, ajusta según JWT
       },
     });
@@ -20,5 +22,25 @@ export class PrismaRevokedTokenRepository implements IRevokedTokenRepository {
       where: { token },
     });
     return !!found;
+  }
+
+  async findToken(token: string): Promise<RevokedToken | null> {
+    const found = await this.prisma.revokedToken.findUnique({
+      where: { token },
+    });
+    if (!found) return null;
+
+    return new RevokedToken(
+      found.token,
+      found.revokedAt,
+      found.expiresAt,
+      found.id,
+    );
+  }
+
+  async deleteToken(token: string): Promise<void> {
+    await this.prisma.revokedToken.deleteMany({
+      where: { token },
+    });
   }
 }

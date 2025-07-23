@@ -1,6 +1,6 @@
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { Module } from '@nestjs/common';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AuthController } from './infrastructure/controllers/auth.controller';
 import { RegisterUseCase } from './application/use-cases/register.use-case';
@@ -12,7 +12,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
 
-const useCases = [
+const useCases = 
+[
   RegisterUseCase,
   LoginUseCase, 
   LogoutUseCase
@@ -38,11 +39,13 @@ const useCases = [
     PrismaModule,
     SharedModule,
   ],
+  exports: [PrismaRevokedTokenRepository],
   controllers: [AuthController],
   providers: [
     ...useCases,
     MessageService,
     AppLogger,
+    PrismaRevokedTokenRepository,
     {
       provide: 'IUserRepository',
       useClass: PrismaUserRepository,

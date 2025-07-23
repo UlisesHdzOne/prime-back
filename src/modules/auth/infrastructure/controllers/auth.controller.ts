@@ -22,6 +22,7 @@ import { LoginUseCase } from '../../application/use-cases/login.use-case';
 import { MessageService } from 'src/shared/services/message.service';
 import { LogoutUseCase } from '../../application/use-cases/logout.use-case';
 import { AppLogger } from 'src/shared/services/app-logger.service';
+import { RevokedTokenGuard } from '../../application/guards/revoked-token.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -134,6 +135,7 @@ export class AuthController {
       },
     },
   })
+  @UseGuards(RevokedTokenGuard)
   async logout(@Req() req: Request) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
