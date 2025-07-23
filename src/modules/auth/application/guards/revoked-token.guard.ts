@@ -1,15 +1,19 @@
 import {
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { PrismaRevokedTokenRepository } from 'src/modules/auth/infrastructure/repositories/revoked-token.repository';
+import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository.interface';
 
 @Injectable()
 export class RevokedTokenGuard implements CanActivate {
-  constructor(private revokedTokenRepo: PrismaRevokedTokenRepository) {}
+  constructor(
+    @Inject('IRevokedTokenRepository')
+    private revokedTokenRepo: IRevokedTokenRepository,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req: Request = context.switchToHttp().getRequest();

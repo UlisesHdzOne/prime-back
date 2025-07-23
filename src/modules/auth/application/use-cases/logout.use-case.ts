@@ -1,5 +1,5 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository';
+import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository.interface';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
 

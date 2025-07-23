@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository';
+import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository.interface';
 import { RevokedToken } from '../../domain/entities/revoked-token.entity';
 
 @Injectable()

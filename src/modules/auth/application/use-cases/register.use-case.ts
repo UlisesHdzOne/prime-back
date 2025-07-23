@@ -1,5 +1,5 @@
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
-import { IUserRepository } from '../../domain/repositories/user.repository';
+import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { SALT_ROUNDS } from 'src/shared/constants';

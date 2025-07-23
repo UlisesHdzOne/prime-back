@@ -5,7 +5,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { AuthController } from './infrastructure/controllers/auth.controller';
 import { RegisterUseCase } from './application/use-cases/register.use-case';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
-import { PrismaRevokedTokenRepository } from './infrastructure/repositories/revoked-token.repository'; // Asegúrate que la ruta sea correcta
+import { PrismaRevokedTokenRepository } from './infrastructure/repositories/prisma-revoked-token.repository';
 import { SharedModule } from 'src/shared/shared.module';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { ConfigModule, ConfigService } from '@nestjs/config';
