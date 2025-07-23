@@ -4,21 +4,34 @@ import {
   Body,
   BadRequestException,
   UnauthorizedException,
+  Headers,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { RegisterDto } from '../../application/dto/register.dto';
 import { LoginDto } from '../../application/dto/login.dto';
 import { LoginUseCase } from '../../application/use-cases/login.use-case';
 import { MessageService } from 'src/shared/services/message.service';
+import { LogoutUseCase } from '../../application/use-cases/logout.use-case';
+import { AppLogger } from 'src/shared/services/app-logger.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly messages: MessageService,
-    private registerUseCase: RegisterUseCase,
-    private loginUseCase: LoginUseCase,
+    private readonly logger: AppLogger,
+    private readonly registerUseCase: RegisterUseCase,
+    private readonly loginUseCase: LoginUseCase,
+    private readonly logoutUseCase: LogoutUseCase,
   ) {}
 
   // ==== REGISTER ====
@@ -97,4 +110,44 @@ export class AuthController {
     }
   }
   // ==== LOGIN ====
+
+  // ==== LOGOUT ====
+  @Post('logout')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Cerrar sesión',
+    description: 'Revoca el token para cerrar sesión',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Logout exitoso',
+    schema: { example: { message: 'Sesión cerrada correctamente.' } },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Token faltante o inválido',
+    schema: {
+      example: {
+        statusCode: 401,
+        message: 'Token de autenticación faltante o inválido.',
+        error: 'Unauthorized',
+      },
+    },
+  })
+  async logout(@Req() req: Request) {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+      const msg = await this.messages.tokenMissing();
+      this.logger.warnUser(msg);
+      throw new UnauthorizedException(msg);
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    await this.logoutUseCase.execute(token);
+
+    const msg = await this.messages.logoutSuccess();
+    this.logger.logUserSuccess('Logout exitoso');
+    return { message: msg };
+  }
+  // ==== LOGOUT ====
 }

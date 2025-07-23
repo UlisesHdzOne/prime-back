@@ -3,5 +3,7 @@
   "USER_REGISTRATION_ATTEMPT": "Intentando registrar usuario",
   "USER_REGISTERED_SUCCESS": "Usuario registrado exitosamente: {{email}}",
   "USER_NOT_FOUND": "Usuario no encontrado",
-  "INVALID_CREDENTIALS": "Credenciales inválidas"
+  "INVALID_CREDENTIALS": "Credenciales inválidas",
+  "LOGOUT_SUCCESS": "Sesión cerrada correctamente.",
+  "TOKEN_MISSING": "Token de autenticación faltante o inválido."
 }

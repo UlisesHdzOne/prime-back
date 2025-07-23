@@ -26,4 +26,12 @@ export class MessageService {
   invalidCredentials(): Promise<string> {
     return this.i18n.t('INVALID_CREDENTIALS');
   }
+
+  async logoutSuccess(): Promise<string> {
+    return this.i18n.t('LOGOUT_SUCCESS');
+  }
+
+  async tokenMissing(): Promise<string> {
+    return this.i18n.t('TOKEN_MISSING');
+  }
 }

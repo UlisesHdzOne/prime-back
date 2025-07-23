@@ -1,7 +1,9 @@
 {
-  "EMAIL_ALREADY_REGISTERED": "Try another email",
-  "USER_REGISTRATION_ATTEMPT": "Trying to register user",
-  "USER_REGISTERED_SUCCESS": "User successfully registered"
-  
-  
+  "EMAIL_ALREADY_REGISTERED": "This email is already registered",
+  "USER_REGISTRATION_ATTEMPT": "Attempting to register user",
+  "USER_REGISTERED_SUCCESS": "User successfully registered: {{email}}",
+  "USER_NOT_FOUND": "User not found",
+  "INVALID_CREDENTIALS": "Invalid credentials",
+  "LOGOUT_SUCCESS": "Successfully logged out.",
+  "TOKEN_MISSING": "Missing or invalid authentication token."
 }
