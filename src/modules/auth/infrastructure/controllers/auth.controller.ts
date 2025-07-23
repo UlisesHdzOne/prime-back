@@ -1,13 +1,9 @@
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import {
-  Controller,
-  Post,
-  Body,
-  BadRequestException,
-  UnauthorizedException,
-  Headers,
-  UseGuards,
-  Req,
-} from '@nestjs/common';
+  EmailAlreadyRegisteredException,
+  InvalidCredentialsException,
+  TokenMissingException,
+} from 'src/shared/exceptions/auth.exceptions';
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
 import {
   ApiBearerAuth,
@@ -65,9 +61,10 @@ export class AuthController {
       const user = await this.registerUseCase.execute(dto);
       return { id: user.id, name: user.name, email: user.email };
     } catch (error) {
-      if (error.code === 'EMAIL_TAKEN') {
-        const msg = await this.messages.emailAlreadyRegistered();
-        throw new BadRequestException(msg);
+      if (error instanceof EmailAlreadyRegisteredException) {
+        this.messages.emailAlreadyRegistered();
+        this.logger.warnUser(await this.messages.emailAlreadyRegistered());
+        throw error;
       }
       throw error;
     }
@@ -103,9 +100,9 @@ export class AuthController {
     try {
       return await this.loginUseCase.execute(dto);
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        const msg = await this.messages.invalidCredentials();
-        throw new UnauthorizedException(msg);
+      if (error instanceof InvalidCredentialsException) {
+        this.logger.warnUser(await this.messages.invalidCredentials());
+        throw error;
       }
       throw error;
     }
@@ -141,7 +138,7 @@ export class AuthController {
     if (!authHeader) {
       const msg = await this.messages.tokenMissing();
       this.logger.warnUser(msg);
-      throw new UnauthorizedException(msg);
+      throw new TokenMissingException();
     }
 
     const token = authHeader.replace('Bearer ', '');

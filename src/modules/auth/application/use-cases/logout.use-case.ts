@@ -1,4 +1,5 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { TokenMissingException } from 'src/shared/exceptions/auth.exceptions';
 import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository.interface';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
@@ -14,9 +15,8 @@ export class LogoutUseCase {
 
   async execute(token: string): Promise<{ message: string }> {
     if (!token) {
-      const msg = await this.messages.tokenMissing();
-      this.logger.warnUser(msg);
-      throw new UnauthorizedException(msg);
+      this.logger.warnUser(await this.messages.tokenMissing());
+      throw new TokenMissingException();
     }
 
     await this.revokedTokenRepository.revokeToken(token);

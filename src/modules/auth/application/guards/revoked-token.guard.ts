@@ -3,8 +3,11 @@ import {
   ExecutionContext,
   Inject,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
+import {
+  TokenMissingException,
+  TokenRevokedException,
+} from 'src/shared/exceptions/auth.exceptions';
 import { Request } from 'express';
 import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository.interface';
 
@@ -20,7 +23,7 @@ export class RevokedTokenGuard implements CanActivate {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new UnauthorizedException('Token faltante');
+      throw new TokenMissingException();
     }
 
     const token = authHeader.replace('Bearer ', '');
@@ -30,7 +33,7 @@ export class RevokedTokenGuard implements CanActivate {
       if (new Date() >= revokedToken.expiresAt) {
         await this.revokedTokenRepo.deleteToken(token);
       } else {
-        throw new UnauthorizedException('Token revocado');
+        throw new TokenRevokedException();
       }
     }
 

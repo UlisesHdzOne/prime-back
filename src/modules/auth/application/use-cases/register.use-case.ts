@@ -1,4 +1,5 @@
-import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { EmailAlreadyRegisteredException } from 'src/shared/exceptions/auth.exceptions';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
 import * as bcrypt from 'bcrypt';
@@ -23,7 +24,7 @@ export class RegisterUseCase {
     if (existing) {
       const msg = await this.messages.emailAlreadyRegistered();
       this.logger.warnUser(msg);
-      throw new BadRequestException(
+      throw new EmailAlreadyRegisteredException(
         await this.messages.emailAlreadyRegistered(),
       );
     }

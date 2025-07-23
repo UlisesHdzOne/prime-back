@@ -1,9 +1,9 @@
+import { Injectable, Inject } from '@nestjs/common';
 import {
-  Injectable,
-  Inject,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+  UserNotFoundException,
+  InvalidCredentialsException,
+} from 'src/shared/exceptions/auth.exceptions';
+
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
 import * as bcrypt from 'bcrypt';
@@ -29,17 +29,15 @@ export class LoginUseCase {
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      const msg = await this.messages.userNotFound();
-      this.logger.warnUser(msg);
-      throw new BadRequestException(msg);
+      this.logger.warnUser(await this.messages.userNotFound());
+      throw new UserNotFoundException();
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      const msg = await this.messages.invalidCredentials();
-      this.logger.warnUser(msg);
-      throw new UnauthorizedException(msg);
+      this.logger.warnUser(await this.messages.invalidCredentials());
+      throw new InvalidCredentialsException();
     }
 
     const payload = { sub: user.id, email: user.email };
