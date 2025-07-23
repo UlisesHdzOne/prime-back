@@ -4,7 +4,7 @@ import configuration from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { SharedModule } from './shared/shared.module';
-import { I18nModule } from 'nestjs-i18n';
+import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 
 import * as path from 'path';
 
@@ -20,6 +20,9 @@ import * as path from 'path';
         path: path.join(__dirname, '../i18n/'),
         watch: true,
       },
+      resolvers: [
+        { use: AcceptLanguageResolver, options: { matchType: 'strict' } },
+      ],
     }),
 
     PrismaModule,

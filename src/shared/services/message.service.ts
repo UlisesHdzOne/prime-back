@@ -3,9 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class MessageService {
-  constructor(
-    private readonly i18n: I18nService
-  ) {}
+  constructor(private readonly i18n: I18nService) {}
 
   emailAlreadyRegistered(): Promise<string> {
     return this.i18n.t('EMAIL_ALREADY_REGISTERED');
@@ -19,5 +17,13 @@ export class MessageService {
     return this.i18n.t('USER_REGISTERED_SUCCESS', {
       args: { email },
     });
+  }
+
+  userNotFound(): Promise<string> {
+    return this.i18n.t('USER_NOT_FOUND');
+  }
+
+  invalidCredentials(): Promise<string> {
+    return this.i18n.t('INVALID_CREDENTIALS');
   }
 }

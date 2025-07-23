@@ -1,13 +1,24 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegisterDto } from '../../application/dto/register.dto';
+import { LoginDto } from '../../application/dto/login.dto';
+import { LoginUseCase } from '../../application/use-cases/login.use-case';
+import { MessageService } from 'src/shared/services/message.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
-    private registerUseCase: RegisterUseCase
+    private readonly messages: MessageService,
+    private registerUseCase: RegisterUseCase,
+    private loginUseCase: LoginUseCase,
   ) {}
 
   // ==== REGISTER ====
@@ -36,9 +47,54 @@ export class AuthController {
     },
   })
   async register(@Body() dto: RegisterDto) {
-    const user = await this.registerUseCase.execute(dto);
-    return { id: user.id, name: user.name, email: user.email };
+    try {
+      const user = await this.registerUseCase.execute(dto);
+      return { id: user.id, name: user.name, email: user.email };
+    } catch (error) {
+      if (error.code === 'EMAIL_TAKEN') {
+        const msg = await this.messages.emailAlreadyRegistered();
+        throw new BadRequestException(msg);
+      }
+      throw error;
+    }
   }
   // ==== REGISTER ====
 
+  // ==== LOGIN ====
+  @Post('login')
+  @ApiOperation({
+    summary: 'Login de usuarios',
+    description: 'Inicia sesión para usuarios registrados',
+  })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Usuario logueado exitosamente',
+    schema: {
+      example: { access_token: 'jwt_token_aqui' },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Credenciales inválidas',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: 'Correo o contraseña inválidos',
+        error: 'Bad Request',
+      },
+    },
+  })
+  async login(@Body() dto: LoginDto) {
+    try {
+      return await this.loginUseCase.execute(dto);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        const msg = await this.messages.invalidCredentials();
+        throw new UnauthorizedException(msg);
+      }
+      throw error;
+    }
+  }
+  // ==== LOGIN ====
 }

@@ -1,5 +1,7 @@
 {
-  "EMAIL_ALREADY_REGISTERED": "Intenta con otro correo diferente",
+  "EMAIL_ALREADY_REGISTERED": "Este correo ya ha sido registrado",
   "USER_REGISTRATION_ATTEMPT": "Intentando registrar usuario",
-  "USER_REGISTERED_SUCCESS": "Usuario registrado exitosamente: {{email}}"
+  "USER_REGISTERED_SUCCESS": "Usuario registrado exitosamente: {{email}}",
+  "USER_NOT_FOUND": "Usuario no encontrado",
+  "INVALID_CREDENTIALS": "Credenciales inválidas"
 }
