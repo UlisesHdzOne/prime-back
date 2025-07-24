@@ -12,12 +12,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
 
-const useCases = 
-[
-  RegisterUseCase,
-  LoginUseCase, 
-  LogoutUseCase
-];
+const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
 
 @Module({
   imports: [
@@ -27,7 +22,11 @@ const useCases =
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');
-        console.log('JWT_SECRET from configService:', secret);
+
+        if (!secret || secret.length < 32) {
+          throw new Error('JWT_SECRET inválido o demasiado corto');
+        }
+
         return {
           secret,
           signOptions: {

@@ -5,36 +5,10 @@ import {
   MaxLength,
   Matches,
   Validate,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
-  ValidationArguments,
-  Equals,
-  validate,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-@ValidatorConstraint({ name: 'IsStrongPassword', async: false })
-class IsStrongPassword implements ValidatorConstraintInterface {
-  validate(password: string) {
-    // Al menos 8 caracteres, una mayúscula, un número y un símbolo
-    const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-    return regex.test(password);
-  }
-  defaultMessage(args: ValidationArguments) {
-    return 'La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un símbolo especial';
-  }
-}
-
-@ValidatorConstraint({ name: 'MatchPasswords', async: false })
-class MatchPasswords implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
-    const object = args.object as any;
-    return value === object.password;
-  }
-  defaultMessage(args: ValidationArguments) {
-    return 'Las contraseñas no coinciden';
-  }
-}
+import { IsStrongPassword } from 'src/shared/validators/is-strong-password.validator';
+import { MatchPasswords } from 'src/shared/validators/match-passwords.validator';
 
 export class RegisterDto {
   @ApiProperty({ description: 'Nombre del usuario', example: 'Juan Perez' })
