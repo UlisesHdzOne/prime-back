@@ -19,13 +19,12 @@ export class RegisterUseCase {
 
   async execute(dto: RegisterDto): Promise<User> {
     const { name, email, password } = dto;
-    this.logger.logUserAttempt(await this.messages.userRegistrationAttempt());
+    this.logger.logUserAttempt(this.messages.userRegistrationAttempt());
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
-      const msg = await this.messages.emailAlreadyRegistered();
-      this.logger.warnUser(msg);
+      this.logger.warnUser(this.messages.emailAlreadyRegistered());
       throw new EmailAlreadyRegisteredException(
-        await this.messages.emailAlreadyRegistered(),
+        this.messages.emailAlreadyRegistered(),
       );
     }
 
@@ -33,9 +32,7 @@ export class RegisterUseCase {
     const user = new User(name, email, hashed);
 
     const createdUser = await this.userRepository.create(user);
-    this.logger.logUserSuccess(
-      await this.messages.userRegisteredSuccess(email),
-    );
+    this.logger.logUserSuccess(this.messages.userRegisteredSuccess(email));
 
     return createdUser;
   }

@@ -29,14 +29,14 @@ export class LoginUseCase {
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      this.logger.warnUser(await this.messages.userNotFound());
+      this.logger.warnUser(this.messages.userNotFound());
       throw new UserNotFoundException();
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      this.logger.warnUser(await this.messages.invalidCredentials());
+      this.logger.warnUser(this.messages.invalidCredentials());
       throw new InvalidCredentialsException();
     }
 

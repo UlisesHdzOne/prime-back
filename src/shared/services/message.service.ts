@@ -5,33 +5,33 @@ import { Injectable } from '@nestjs/common';
 export class MessageService {
   constructor(private readonly i18n: I18nService) {}
 
-  emailAlreadyRegistered(): Promise<string> {
-    return this.i18n.t('EMAIL_ALREADY_REGISTERED');
+  emailAlreadyRegistered(): string {
+    return this.i18n.t('auth.registration.emailAlreadyRegistered');
   }
 
-  userRegistrationAttempt(): Promise<string> {
-    return this.i18n.t('USER_REGISTRATION_ATTEMPT');
+  userRegistrationAttempt():string {
+    return this.i18n.t('auth.registration.attempt');
   }
 
-  userRegisteredSuccess(email: string): Promise<string> {
-    return this.i18n.t('USER_REGISTERED_SUCCESS', {
+  userRegisteredSuccess(email: string):string {
+    return this.i18n.t('auth.registration.success', {
       args: { email },
     });
   }
 
-  userNotFound(): Promise<string> {
-    return this.i18n.t('USER_NOT_FOUND');
+  userNotFound(): string {
+    return this.i18n.t('auth.exceptions.userNotFound');
   }
 
-  invalidCredentials(): Promise<string> {
-    return this.i18n.t('INVALID_CREDENTIALS');
+  invalidCredentials():string {
+    return this.i18n.t('auth.login.invalidCredentials');
   }
 
-  async logoutSuccess(): Promise<string> {
-    return this.i18n.t('LOGOUT_SUCCESS');
+   logoutSuccess(): string {
+    return this.i18n.t('auth.logout.success');
   }
 
-  async tokenMissing(): Promise<string> {
-    return this.i18n.t('TOKEN_MISSING');
+  tokenMissing():string {
+    return this.i18n.t('auth.token.missing');
   }
 }

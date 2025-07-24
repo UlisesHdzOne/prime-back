@@ -15,13 +15,13 @@ export class LogoutUseCase {
 
   async execute(token: string): Promise<{ message: string }> {
     if (!token) {
-      this.logger.warnUser(await this.messages.tokenMissing());
+      this.logger.warnUser(this.messages.tokenMissing());
       throw new TokenMissingException();
     }
 
     await this.revokedTokenRepository.revokeToken(token);
 
-    const msg = await this.messages.logoutSuccess();
+    const msg = this.messages.logoutSuccess();
     this.logger.logUserSuccess(msg);
     return { message: msg };
   }
