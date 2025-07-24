@@ -6,12 +6,17 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-
+import { I18nService } from 'nestjs-i18n';
+@Catch()
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+
+  constructor(
+    private readonly i18n: I18nService
+  ) {}
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -21,20 +26,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const response = exception.getResponse();
+      const responseContent = exception.getResponse();
       message =
-        typeof response === 'string' ? response : JSON.stringify(response);
+        typeof responseContent === 'string'
+          ? responseContent
+          : (responseContent as any).message || message;
     }
 
-    this.logger.warn(
-      `[${request.method}] ${request.url} → ${JSON.stringify(message)}`,
-    );
+    const translated = await this.i18n.t(`exceptions.${message}`, {
+      lang: request.headers['accept-language'] || 'en',
+      args: (exception as any)?.response?.args || {},
+    });
+
+    this.logger.warn(`[${request.method}] ${request.url} → ${message}`);
 
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      error: message,
+      error: translated,
     });
   }
 }

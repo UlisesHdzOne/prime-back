@@ -1,9 +1,5 @@
 import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
-import {
-  EmailAlreadyRegisteredException,
-  InvalidCredentialsException,
-  TokenMissingException,
-} from 'src/shared/exceptions/auth.exceptions';
+import { TokenMissingException } from 'src/shared/exceptions/auth.exceptions';
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
 import {
   ApiBearerAuth,
@@ -34,100 +30,84 @@ export class AuthController {
   // ==== REGISTER ====
   @Post('register')
   @ApiOperation({
-    summary: 'Registrar un nuevo usuario',
-    description: 'Crea un usuario si el correo no ha sido registrado',
+    summary: 'Register a new user',
+    description: 'Creates a user if the email is not already registered',
   })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
     status: 201,
-    description: 'Usuario registrado exitosamente',
+    description: 'User successfully registered',
     schema: {
       example: { id: 1, name: 'Juan', email: 'juan@mail.com' },
     },
   })
   @ApiResponse({
     status: 400,
-    description: 'Correo electrónico ya registrado',
+    description: 'Email already registered',
     schema: {
       example: {
         statusCode: 400,
-        message: 'Correo electrónico ya registrado',
+        message: 'Email already registered',
         error: 'Bad Request',
       },
     },
   })
   async register(@Body() dto: RegisterDto) {
-    try {
-      const user = await this.registerUseCase.execute(dto);
-      return { id: user.id, name: user.name, email: user.email };
-    } catch (error) {
-      if (error instanceof EmailAlreadyRegisteredException) {
-        this.messages.emailAlreadyRegistered();
-        this.logger.warnUser(await this.messages.emailAlreadyRegistered());
-        throw error;
-      }
-      throw error;
-    }
+    const user = await this.registerUseCase.execute(dto);
+    this.logger.logUserSuccess(
+      await this.messages.userRegisteredSuccess(user.email),
+    );
+    return { id: user.id, name: user.name, email: user.email };
   }
-  // ==== REGISTER ====
 
   // ==== LOGIN ====
   @Post('login')
   @ApiOperation({
-    summary: 'Login de usuarios',
-    description: 'Inicia sesión para usuarios registrados',
+    summary: 'User login',
+    description: 'Logs in registered users',
   })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
     status: 200,
-    description: 'Usuario logueado exitosamente',
+    description: 'User logged in successfully',
     schema: {
-      example: { access_token: 'jwt_token_aqui' },
+      example: { access_token: 'jwt_token_here' },
     },
   })
   @ApiResponse({
     status: 400,
-    description: 'Credenciales inválidas',
+    description: 'Invalid credentials',
     schema: {
       example: {
         statusCode: 400,
-        message: 'Correo o contraseña inválidos',
+        message: 'Invalid email or password',
         error: 'Bad Request',
       },
     },
   })
   async login(@Body() dto: LoginDto) {
-    try {
-      return await this.loginUseCase.execute(dto);
-    } catch (error) {
-      if (error instanceof InvalidCredentialsException) {
-        this.logger.warnUser(await this.messages.invalidCredentials());
-        throw error;
-      }
-      throw error;
-    }
+    return await this.loginUseCase.execute(dto);
   }
-  // ==== LOGIN ====
 
   // ==== LOGOUT ====
   @Post('logout')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Cerrar sesión',
-    description: 'Revoca el token para cerrar sesión',
+    summary: 'Logout',
+    description: 'Revokes the token to log out',
   })
   @ApiResponse({
     status: 200,
-    description: 'Logout exitoso',
-    schema: { example: { message: 'Sesión cerrada correctamente.' } },
+    description: 'Logout successful',
+    schema: { example: { message: 'Session closed successfully.' } },
   })
   @ApiResponse({
     status: 401,
-    description: 'Token faltante o inválido',
+    description: 'Missing or invalid token',
     schema: {
       example: {
         statusCode: 401,
-        message: 'Token de autenticación faltante o inválido.',
+        message: 'Missing or invalid authentication token.',
         error: 'Unauthorized',
       },
     },
@@ -140,13 +120,10 @@ export class AuthController {
       this.logger.warnUser(msg);
       throw new TokenMissingException();
     }
-
     const token = authHeader.replace('Bearer ', '');
     await this.logoutUseCase.execute(token);
-
     const msg = await this.messages.logoutSuccess();
-    this.logger.logUserSuccess('Logout exitoso');
+    this.logger.logUserSuccess('Logout successful');
     return { message: msg };
   }
-  // ==== LOGOUT ====
 }

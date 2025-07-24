@@ -1,9 +1,24 @@
 {
-  "EMAIL_ALREADY_REGISTERED": "Este correo ya ha sido registrado",
-  "USER_REGISTRATION_ATTEMPT": "Intentando registrar usuario",
+  "EMAIL_ALREADY_REGISTERED": "Este correo ya está registrado",
+  "USER_REGISTRATION_ATTEMPT": "Intentando registrar al usuario",
   "USER_REGISTERED_SUCCESS": "Usuario registrado exitosamente: {{email}}",
   "USER_NOT_FOUND": "Usuario no encontrado",
   "INVALID_CREDENTIALS": "Credenciales inválidas",
-  "LOGOUT_SUCCESS": "Sesión cerrada correctamente.",
-  "TOKEN_MISSING": "Token de autenticación faltante o inválido."
+  "LOGOUT_SUCCESS": "Cierre de sesión exitoso.",
+  "TOKEN_MISSING": "Token de autenticación faltante o inválido.",
+
+  "VALIDATION": {
+    "PASSWORD_STRENGTH": "La contraseña debe tener al menos 8 caracteres, una letra mayúscula, un número y un símbolo especial",
+    "PASSWORD_MATCH": "Las contraseñas no coinciden"
+  },
+
+  "exceptions": {
+    "userNotFound": "Usuario no encontrado",
+    "invalidCredentials": "Credenciales inválidas",
+    "userAlreadyExists": "El usuario ya existe",
+    "tokenExpired": "El token ha expirado",
+    "tokenMissing": "Falta el token",
+    "tokenRevoked": "El token ha sido revocado",
+    "emailAlreadyRegistered": "El correo ya está registrado"
+  }
 }

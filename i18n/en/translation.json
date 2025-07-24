@@ -1,9 +1,34 @@
 {
-  "EMAIL_ALREADY_REGISTERED": "This email is already registered",
-  "USER_REGISTRATION_ATTEMPT": "Attempting to register user",
-  "USER_REGISTERED_SUCCESS": "User successfully registered: {{email}}",
-  "USER_NOT_FOUND": "User not found",
-  "INVALID_CREDENTIALS": "Invalid credentials",
-  "LOGOUT_SUCCESS": "Successfully logged out.",
-  "TOKEN_MISSING": "Missing or invalid authentication token."
+  "auth": {
+    "registration": {
+      "attempt": "Attempting to register user",
+      "success": "User successfully registered: {{email}}",
+      "emailAlreadyRegistered": "This email is already registered"
+    },
+    "login": {
+      "invalidCredentials": "Invalid credentials",
+      "userNotFound": "User not found"
+    },
+    "logout": {
+      "success": "Successfully logged out."
+    },
+    "token": {
+      "missing": "Missing or invalid authentication token.",
+      "expired": "Token has expired",
+      "revoked": "Token has been revoked"
+    }
+  },
+  "validation": {
+    "passwordStrength": "Password must contain at least 8 characters, one uppercase letter, one number and one special symbol",
+    "passwordMatch": "Passwords do not match"
+  },
+  "exceptions": {
+    "userNotFound": "User not found",
+    "invalidCredentials": "Invalid credentials",
+    "userAlreadyExists": "User already exists",
+    "tokenExpired": "Token has expired",
+    "tokenMissing": "Token is missing",
+    "tokenRevoked": "Token has been revoked",
+    "emailAlreadyRegistered": "Email is already registered"
+  }
 }
