@@ -11,50 +11,27 @@ import { LoginUseCase } from './application/use-cases/login.use-case';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
-import { JwtConfig } from 'src/shared/config/jwt.config.interface';
-import { getMsFromExpiresIn } from 'src/shared/utils/jwt.utils';
-import { EnvVariables } from 'src/shared/config/env-config.interface';
-import {
-  InvalidJwtConfigException,
-  WeakSecretException,
-  InvalidExpiresInFormatException,
-} from 'src/shared/exceptions/auth.exceptions';
-
-const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
+import { JwtProviderService } from 'src/shared/config/JwtProviderService';
+import { JwtConfigModule } from 'src/shared/config/jwt-config.module';
+const useCases = 
+[
+  RegisterUseCase, 
+  LoginUseCase, 
+  LogoutUseCase
+];
 
 @Module({
   imports: [
     ConfigModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-
-      useFactory: (configService: ConfigService<EnvVariables>) => {
-        const secret = configService.get('JWT_SECRET');
-        const expiresIn = configService.get('JWT_EXPIRES_IN');
-
-        if (!secret || !expiresIn) {
-          throw new InvalidJwtConfigException(
-            'JWT_SECRET o JWT_EXPIRES_IN no definidos',
-          );
-        }
-
-        if (secret.length < 32) {
-          throw new WeakSecretException();
-        }
-
-        try {
-          getMsFromExpiresIn(expiresIn);
-        } catch (error) {
-          throw new InvalidExpiresInFormatException(error.message);
-        }
-
-        return {
-          secret,
-          signOptions: { expiresIn },
-        };
-      },
+      imports: [JwtConfigModule],
+      inject: ['JWT_CONFIG'],
+      useFactory: (jwtConfig) => ({
+        secret: jwtConfig.secret,
+        signOptions: { expiresIn: jwtConfig.expiresIn },
+      }),
     }),
+
     PrismaModule,
     SharedModule,
   ],
@@ -65,36 +42,7 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
     MessageService,
     AppLogger,
     PrismaRevokedTokenRepository,
-    {
-      provide: 'JWT_CONFIG',
-      useFactory: (configService: ConfigService): JwtConfig => {
-        const secret = configService.get<string>('JWT_SECRET');
-        const expiresIn = configService.get<string>('JWT_EXPIRES_IN');
-
-        if (!secret || !expiresIn) {
-          throw new InvalidJwtConfigException(
-            'JWT_SECRET o JWT_EXPIRES_IN no definidos',
-          );
-        }
-
-        if (secret.length < 32) {
-          throw new WeakSecretException();
-        }
-
-        try {
-          getMsFromExpiresIn(expiresIn);
-        } catch (error) {
-          throw new InvalidExpiresInFormatException(error.message);
-        }
-
-        return {
-          secret,
-          expiresIn,
-          expiration: getMsFromExpiresIn(expiresIn),
-        };
-      },
-      inject: [ConfigService],
-    },
+    JwtProviderService,
     {
       provide: 'IUserRepository',
       useClass: PrismaUserRepository,
