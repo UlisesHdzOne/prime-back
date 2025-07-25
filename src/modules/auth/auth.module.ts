@@ -11,6 +11,7 @@ import { LoginUseCase } from './application/use-cases/login.use-case';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
+import { JwtConfig } from 'src/shared/config/jwt.config.interface';
 
 const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
 
@@ -45,6 +46,41 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
     MessageService,
     AppLogger,
     PrismaRevokedTokenRepository,
+    {
+      provide: 'JWT_CONFIG',
+      useFactory: (configService: ConfigService): JwtConfig => {
+        const secret = configService.get<string>('JWT_SECRET');
+        const expiresIn = configService.get<string>('JWT_EXPIRES_IN');
+
+        if (!secret || !expiresIn) {
+          throw new Error('Faltan variables de JWT en .env');
+        }
+
+        const getMsFromExpiresIn = (expiresIn: string): number => {
+          const time = parseInt(expiresIn.slice(0, -1));
+          const unit = expiresIn.slice(-1);
+          switch (unit) {
+            case 's':
+              return time * 1000;
+            case 'm':
+              return time * 60 * 1000;
+            case 'h':
+              return time * 60 * 60 * 1000;
+            case 'd':
+              return time * 24 * 60 * 60 * 1000;
+            default:
+              return 86400 * 1000;
+          }
+        };
+
+        return {
+          secret,
+          expiresIn,
+          expiration: getMsFromExpiresIn(expiresIn),
+        };
+      },
+      inject: [ConfigService],
+    },
     {
       provide: 'IUserRepository',
       useClass: PrismaUserRepository,
