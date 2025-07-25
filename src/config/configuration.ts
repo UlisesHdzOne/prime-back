@@ -26,7 +26,8 @@ export default () => ({
   postgresDb: envConfig.POSTGRES_DB,
   databaseUrl: envConfig.DATABASE_URL,
   jwt: {
-    secret: envConfig.JWT_SECRET,
-    expiresIn: envConfig.JWT_EXPIRES_IN,
+    secret:
+      envConfig.JWT_SECRET || 'default-secret-de-desarrollo-solo-para-testing',
+    expiresIn: envConfig.JWT_EXPIRES_IN || '1h',
   },
 });
