@@ -17,6 +17,6 @@ export class IsStrongPassword implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return this.messages.passwordStrength();
+    return this.messages.passwordRequirements();
   }
 }

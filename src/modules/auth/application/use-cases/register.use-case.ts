@@ -1,11 +1,15 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { EmailAlreadyRegisteredException } from 'src/shared/exceptions/auth.exceptions';
+import * as bcrypt from 'bcrypt';
+
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
-import * as bcrypt from 'bcrypt';
-import { SALT_ROUNDS } from 'src/shared/constants';
 import { RegisterDto } from '../dto/register.dto';
+
 import { AppLogger } from 'src/shared/services/app-logger.service';
+import { MessageService } from 'src/shared/services/message.service';
+import { EmailAlreadyRegisteredException } from 'src/shared/exceptions/auth.exceptions';
+import { SALT_ROUNDS } from 'src/shared/constants';
+import { TranslationKeys } from 'src/shared/utils/translation-keys';
 
 @Injectable()
 export class RegisterUseCase {
@@ -13,23 +17,31 @@ export class RegisterUseCase {
     @Inject('IUserRepository')
     private userRepository: IUserRepository,
     private readonly logger: AppLogger,
+    private readonly messageService: MessageService,
   ) {}
 
   async execute(dto: RegisterDto): Promise<User> {
     const { name, email, password } = dto;
-    this.logger.logUserAttempt(`User registration attempt: ${email}`);
+
+    this.logger.logUserAttempt(
+      this.messageService.get(TranslationKeys.USER_REGISTRATION_ATTEMPT, { email }),
+    );
+
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
-      const warnMsg = `Email already registered: ${email}`;
-      this.logger.warnUser(warnMsg);
-      throw new EmailAlreadyRegisteredException(warnMsg);
+      const msg = this.messageService.get(TranslationKeys.EMAIL_ALREADY_REGISTERED, { email });
+      this.logger.warnUser(msg);
+      throw new EmailAlreadyRegisteredException(msg);
     }
 
     const hashed = await bcrypt.hash(password, SALT_ROUNDS);
     const user = new User(name, email, hashed);
 
     const createdUser = await this.userRepository.create(user);
-    this.logger.logUserSuccess(`User registered successfully: ${email}`);
+
+    this.logger.logUserSuccess(
+      this.messageService.get(TranslationKeys.USER_REGISTRATION_SUCCESS, { email }),
+    );
 
     return createdUser;
   }

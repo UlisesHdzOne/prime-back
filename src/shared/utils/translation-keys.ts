@@ -2,6 +2,8 @@ export enum TranslationKeys {
   USER_REGISTERED_SUCCESS = 'auth.registration.success',
   EMAIL_ALREADY_REGISTERED = 'auth.registration.emailAlreadyRegistered',
   LOGIN_INVALID_CREDENTIALS = 'auth.login.invalidCredentials',
+  AUTH_LOGIN_ATTEMPT = 'auth.login.attempt',
+  AUTH_LOGIN_SUCCESS = 'auth.login.success',
   LOGOUT_SUCCESS = 'auth.logout.success',
   TOKEN_MISSING = 'auth.token.missing',
   TOKEN_EXPIRED = 'auth.token.expired',
@@ -15,4 +17,7 @@ export enum TranslationKeys {
   EXCEPTION_TOKEN_MISSING = 'exceptions.tokenMissing',
   EXCEPTION_TOKEN_REVOKED = 'exceptions.tokenRevoked',
   EXCEPTION_EMAIL_ALREADY_REGISTERED = 'exceptions.emailAlreadyRegistered',
+  EXCEPTION_INTERNAL_SERVER_ERROR = 'exceptions.internalServerError',
+  USER_REGISTRATION_ATTEMPT = 'auth.registration.attempt',
+  USER_REGISTRATION_SUCCESS = 'auth.registration.success',
 }

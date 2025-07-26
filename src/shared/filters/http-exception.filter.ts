@@ -7,11 +7,26 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { MessageService } from '../services/message.service';
-@Catch()
+import { TranslationKeys } from '../utils/translation-keys';
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly messages: MessageService) {}
   private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  private mapExceptionMessageKey(message: string): TranslationKeys {
+    switch (message) {
+      case 'User Not Found':
+        return TranslationKeys.EXCEPTION_USER_NOT_FOUND;
+      case 'Invalid Credentials':
+        return TranslationKeys.EXCEPTION_INVALID_CREDENTIALS;
+      case 'Email Already Registered':
+        return TranslationKeys.EXCEPTION_EMAIL_ALREADY_REGISTERED;
+      // agrega más casos según tus mensajes
+      case 'Internal server error':
+      default:
+        return TranslationKeys.EXCEPTION_INTERNAL_SERVER_ERROR;
+    }
+  }
 
   async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -30,7 +45,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
           : (responseContent as any).message || message;
     }
 
-    const translated = this.messages.get(`exceptions.${message}`, {
+    const translationKey = this.mapExceptionMessageKey(message);
+
+    const translated = this.messages.get(translationKey, {
       lang: request.headers['accept-language'] || 'en',
       args: (exception as any)?.response?.args || {},
     });

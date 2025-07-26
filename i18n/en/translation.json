@@ -1,13 +1,15 @@
 {
   "auth": {
     "registration": {
-      "attempt": "Attempting to register user",
+      "attempt": "Attempting to register user: {{email}}",
       "success": "User successfully registered: {{email}}",
       "emailAlreadyRegistered": "This email is already registered"
     },
     "login": {
       "invalidCredentials": "Invalid credentials",
-      "userNotFound": "User not found"
+      "userNotFound": "User not found",
+      "success": "Login successful",
+      "attempt": "Attempting to log in"
     },
     "logout": {
       "success": "Successfully logged out."
@@ -29,6 +31,7 @@
     "tokenExpired": "Token has expired",
     "tokenMissing": "Token is missing",
     "tokenRevoked": "Token has been revoked",
-    "emailAlreadyRegistered": "Email is already registered"
+    "emailAlreadyRegistered": "Email is already registered",
+    "internalServerError": "Internal server error"
   }
 }
