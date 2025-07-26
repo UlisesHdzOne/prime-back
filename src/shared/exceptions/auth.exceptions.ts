@@ -6,11 +6,12 @@ import {
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 export class UserNotFoundException extends HttpException {
-  constructor() {
+  constructor(message?: string) {
     super(
       {
         statusCode: HttpStatus.BAD_REQUEST,
-        message: i18nValidationMessage('exceptions.UserNotFoundException'),
+        message:
+          message ?? i18nValidationMessage('exceptions.UserNotFoundException'),
         error: 'User Not Found',
       },
       HttpStatus.BAD_REQUEST,
@@ -19,11 +20,11 @@ export class UserNotFoundException extends HttpException {
 }
 
 export class InvalidCredentialsException extends HttpException {
-  constructor() {
+  constructor(message: string) {
     super(
       {
         statusCode: HttpStatus.UNAUTHORIZED,
-        message: i18nValidationMessage('exceptions.invalidCredentials'),
+        message,
         error: 'Invalid Credentials',
       },
       HttpStatus.UNAUTHORIZED,
@@ -130,6 +131,32 @@ export class InvalidExpiresInFormatException extends HttpException {
         details,
       },
       HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
+export class TooManyAttemptsException extends HttpException {
+  constructor(message?: string) {
+    super(
+      {
+        statusCode: HttpStatus.TOO_MANY_REQUESTS,
+        message: message ?? i18nValidationMessage('exceptions.tooManyAttempts'),
+        error: 'Too Many Attempts',
+      },
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
+  }
+}
+
+export class UserInactiveException extends HttpException {
+  constructor(message?: string) {
+    super(
+      {
+        statusCode: HttpStatus.FORBIDDEN,
+        message: message ?? i18nValidationMessage('exceptions.userInactive'),
+        error: 'User Inactive',
+      },
+      HttpStatus.FORBIDDEN,
     );
   }
 }

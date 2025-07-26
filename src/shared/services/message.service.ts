@@ -16,14 +16,8 @@ type NoArgsKeys = Exclude<TranslationKeys, keyof ArgsForKeys>;
 export class MessageService {
   constructor(private readonly i18n: I18nService) {}
 
-  /** Traduce internamente una clave con o sin argumentos */
-  private get<K extends keyof ArgsForKeys>(
-    key: K,
-    args: ArgsForKeys[K],
-  ): string;
-  private get<K extends NoArgsKeys>(key: K): string;
-  private get<K extends TranslationKeys>(key: K, args?: unknown): string {
-    return args ? this.i18n.t(key, { args }) : this.i18n.t(key, {});
+  private get(key: TranslationKeys, args?: Record<string, any>): string {
+    return args ? this.i18n.t(key, { args }) : this.i18n.t(key);
   }
 
   getTranslatedException(
@@ -38,8 +32,10 @@ export class MessageService {
     return this.get(TranslationKeys.EMAIL_ALREADY_REGISTERED);
   }
 
-  invalidCredentials(): string {
-    return this.get(TranslationKeys.LOGIN_INVALID_CREDENTIALS);
+  invalidCredentials(email?: string): string {
+    return email
+      ? this.get(TranslationKeys.EXCEPTION_INVALID_CREDENTIALS, { email })
+      : this.get(TranslationKeys.EXCEPTION_INVALID_CREDENTIALS);
   }
 
   authLoginAttempt(email: string): string {

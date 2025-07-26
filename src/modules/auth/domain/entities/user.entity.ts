@@ -4,5 +4,6 @@ export class User {
     public readonly email: string,
     public readonly password: string,
     public readonly id?: number,
+    public readonly isActive?: boolean,
   ) {}
 }

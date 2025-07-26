@@ -12,9 +12,9 @@ import { MatchPasswords } from 'src/shared/validators/match-passwords.validator'
 
 export class RegisterDto {
   @ApiProperty({ description: 'Nombre del usuario', example: 'Juan Perez' })
-  @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(50)
+  @IsNotEmpty({ message: 'El nombre es obligatorio' })
+  @MinLength(3, { message: 'El nombre debe tener al menos 3 caracteres' })
+  @MaxLength(50, { message: 'El nombre debe tener máximo 50 caracteres' })
   @Matches(/^[a-zA-Z\s]+$/, {
     message: 'El nombre solo puede contener letras y espacios',
   })
@@ -24,8 +24,8 @@ export class RegisterDto {
     description: 'Correo electrónico del usuario',
     example: 'juan@mail.com',
   })
-  @IsEmail()
-  @MaxLength(100)
+  @IsEmail({}, { message: 'Correo electrónico inválido' })
+  @MaxLength(100, { message: 'El correo debe tener máximo 100 caracteres' })
   email: string;
 
   @ApiProperty({
@@ -34,9 +34,9 @@ export class RegisterDto {
     maxLength: 50,
     example: 'P4ssw0rd!',
   })
-  @IsNotEmpty()
-  @MinLength(8)
-  @MaxLength(50)
+  @IsNotEmpty({ message: 'La contraseña es obligatoria' })
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
+  @MaxLength(50, { message: 'La contraseña debe tener máximo 50 caracteres' })
   @Validate(IsStrongPassword)
   password: string;
 
@@ -46,7 +46,9 @@ export class RegisterDto {
     maxLength: 50,
     example: 'P4ssw0rd!',
   })
-  @IsNotEmpty()
-  @Validate(MatchPasswords)
+  @IsNotEmpty({ message: 'La confirmación de contraseña es obligatoria' })
+  @Validate(MatchPasswords, {
+    message: 'La confirmación de contraseña no coincide con la contraseña',
+  })
   passwordConfirm: string;
 }
