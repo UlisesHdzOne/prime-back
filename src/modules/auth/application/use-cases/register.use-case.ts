@@ -9,8 +9,6 @@ import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
 import { EmailAlreadyRegisteredException } from 'src/shared/exceptions/auth.exceptions';
 import { SALT_ROUNDS } from 'src/shared/constants';
-import { TranslationKeys } from 'src/shared/utils/translation-keys';
-
 @Injectable()
 export class RegisterUseCase {
   constructor(
@@ -24,12 +22,12 @@ export class RegisterUseCase {
     const { name, email, password } = dto;
 
     this.logger.logUserAttempt(
-      this.messageService.get(TranslationKeys.USER_REGISTRATION_ATTEMPT, { email }),
+      this.messageService.userRegistrationAttempt(email),
     );
 
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
-      const msg = this.messageService.get(TranslationKeys.EMAIL_ALREADY_REGISTERED, { email });
+      const msg = this.messageService.emailAlreadyRegistered();
       this.logger.warnUser(msg);
       throw new EmailAlreadyRegisteredException(msg);
     }
@@ -40,7 +38,7 @@ export class RegisterUseCase {
     const createdUser = await this.userRepository.create(user);
 
     this.logger.logUserSuccess(
-      this.messageService.get(TranslationKeys.USER_REGISTRATION_SUCCESS, { email }),
+      this.messageService.userRegistrationSuccess(email),
     );
 
     return createdUser;

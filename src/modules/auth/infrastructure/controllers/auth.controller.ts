@@ -56,7 +56,7 @@ export class AuthController {
     const user = await this.registerUseCase.execute(dto);
     this.logger.logUserSuccess(`User registered: ${user.email}`);
     return {
-      message: this.messages.userRegisteredSuccess(user.email),
+      message: this.messages.userRegistrationSuccess(user.email),
       user: { id: user.id, name: user.name, email: user.email },
     };
   }

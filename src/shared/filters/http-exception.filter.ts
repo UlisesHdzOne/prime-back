@@ -47,10 +47,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const translationKey = this.mapExceptionMessageKey(message);
 
-    const translated = this.messages.get(translationKey, {
-      lang: request.headers['accept-language'] || 'en',
-      args: (exception as any)?.response?.args || {},
-    });
+const translated = await this.messages.getTranslatedException(
+  translationKey,
+  request.headers['accept-language'] || 'en',
+  (exception as any)?.response?.args || {},
+);
+
 
     this.logger.warn(`[${request.method}] ${request.url} → ${message}`);
 

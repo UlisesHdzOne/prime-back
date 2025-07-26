@@ -1,5 +1,4 @@
 export enum TranslationKeys {
-  USER_REGISTERED_SUCCESS = 'auth.registration.success',
   EMAIL_ALREADY_REGISTERED = 'auth.registration.emailAlreadyRegistered',
   LOGIN_INVALID_CREDENTIALS = 'auth.login.invalidCredentials',
   AUTH_LOGIN_ATTEMPT = 'auth.login.attempt',
