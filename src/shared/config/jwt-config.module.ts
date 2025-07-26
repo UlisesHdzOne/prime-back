@@ -1,5 +1,3 @@
-// src/shared/config/jwt-config.module.ts
-
 import { Module, Global } from '@nestjs/common';
 import { JwtConfigService } from './jwt-config.service';
 

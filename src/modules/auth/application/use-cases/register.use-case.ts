@@ -6,7 +6,6 @@ import * as bcrypt from 'bcrypt';
 import { SALT_ROUNDS } from 'src/shared/constants';
 import { RegisterDto } from '../dto/register.dto';
 import { AppLogger } from 'src/shared/services/app-logger.service';
-import { MessageService } from 'src/shared/services/message.service';
 
 @Injectable()
 export class RegisterUseCase {
@@ -14,25 +13,23 @@ export class RegisterUseCase {
     @Inject('IUserRepository')
     private userRepository: IUserRepository,
     private readonly logger: AppLogger,
-    private readonly messages: MessageService,
   ) {}
 
   async execute(dto: RegisterDto): Promise<User> {
     const { name, email, password } = dto;
-    this.logger.logUserAttempt(this.messages.userRegistrationAttempt());
+    this.logger.logUserAttempt(`User registration attempt: ${email}`);
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
-      this.logger.warnUser(this.messages.emailAlreadyRegistered());
-      throw new EmailAlreadyRegisteredException(
-        this.messages.emailAlreadyRegistered(),
-      );
+      const warnMsg = `Email already registered: ${email}`;
+      this.logger.warnUser(warnMsg);
+      throw new EmailAlreadyRegisteredException(warnMsg);
     }
 
     const hashed = await bcrypt.hash(password, SALT_ROUNDS);
     const user = new User(name, email, hashed);
 
     const createdUser = await this.userRepository.create(user);
-    this.logger.logUserSuccess(this.messages.userRegisteredSuccess(email));
+    this.logger.logUserSuccess(`User registered successfully: ${email}`);
 
     return createdUser;
   }

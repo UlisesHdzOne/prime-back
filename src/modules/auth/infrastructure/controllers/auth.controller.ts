@@ -54,9 +54,7 @@ export class AuthController {
   })
   async register(@Body() dto: RegisterDto) {
     const user = await this.registerUseCase.execute(dto);
-    this.logger.logUserSuccess(
-      await this.messages.userRegisteredSuccess(user.email),
-    );
+    this.logger.logUserSuccess(`User registered: ${user.email}`);
     return { id: user.id, name: user.name, email: user.email };
   }
 
@@ -116,14 +114,14 @@ export class AuthController {
   async logout(@Req() req: Request) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
-      const msg = await this.messages.tokenMissing();
-      this.logger.warnUser(msg);
+      this.logger.warnUser('Missing authorization header');
       throw new TokenMissingException();
     }
     const token = authHeader.replace('Bearer ', '');
     await this.logoutUseCase.execute(token);
-    const msg = await this.messages.logoutSuccess();
     this.logger.logUserSuccess('Logout successful');
+    const msg = this.messages.logoutSuccess();
+
     return { message: msg };
   }
 }

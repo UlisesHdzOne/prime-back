@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { TokenMissingException } from 'src/shared/exceptions/auth.exceptions';
 import { IRevokedTokenRepository } from '../../domain/repositories/revoked-token.repository.interface';
 import { AppLogger } from 'src/shared/services/app-logger.service';
-import { MessageService } from 'src/shared/services/message.service';
 
 @Injectable()
 export class LogoutUseCase {
@@ -10,18 +9,17 @@ export class LogoutUseCase {
     @Inject('IRevokedTokenRepository')
     private readonly revokedTokenRepository: IRevokedTokenRepository,
     private readonly logger: AppLogger,
-    private readonly messages: MessageService,
   ) {}
 
   async execute(token: string): Promise<{ message: string }> {
     if (!token) {
-      this.logger.warnUser(this.messages.tokenMissing());
+      this.logger.warnUser('Token is missing');
       throw new TokenMissingException();
     }
 
     await this.revokedTokenRepository.revokeToken(token);
 
-    const msg = this.messages.logoutSuccess();
+    const msg = 'Logout successful';
     this.logger.logUserSuccess(msg);
     return { message: msg };
   }
