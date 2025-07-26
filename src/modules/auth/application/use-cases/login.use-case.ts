@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Inject,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import {
   UserNotFoundException,
   InvalidCredentialsException,
@@ -16,10 +11,12 @@ import { JwtService } from '@nestjs/jwt';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { LoginDto } from '../dto/login.dto';
 import { MessageService } from 'src/shared/services/message.service';
+import Redis from 'ioredis';
+
 @Injectable()
 export class LoginUseCase {
-  private failedAttempts = new Map<string, number>();
   private MAX_ATTEMPTS = 5;
+  private readonly BLOCK_TIME_SECONDS = 15 * 60;
 
   constructor(
     @Inject('IUserRepository')
@@ -27,15 +24,29 @@ export class LoginUseCase {
     private readonly jwtService: JwtService,
     private readonly logger: AppLogger,
     private readonly messages: MessageService,
+    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
   ) {}
 
-  private incrementFailedAttempts(email: string) {
-    const attempts = this.failedAttempts.get(email) || 0;
-    this.failedAttempts.set(email, attempts + 1);
+  private getKey(email: string) {
+    return `login_attempts:${email}`;
   }
 
-  private resetFailedAttempts(email: string) {
-    this.failedAttempts.delete(email);
+  private async incrementFailedAttempts(email: string) {
+    const key = this.getKey(email);
+    const attempts = await this.redisClient.incr(key);
+    if (attempts === 1) {
+      await this.redisClient.expire(key, this.BLOCK_TIME_SECONDS);
+    }
+    return attempts;
+  }
+
+  private async resetFailedAttempts(email: string) {
+    await this.redisClient.del(this.getKey(email));
+  }
+
+  private async getFailedAttempts(email: string) {
+    const attempts = await this.redisClient.get(this.getKey(email));
+    return Number(attempts) || 0;
   }
 
   async execute(dto: LoginDto): Promise<{ access_token: string }> {
@@ -48,7 +59,9 @@ export class LoginUseCase {
 
     this.logger.logUserAttempt(this.messages.authLoginAttempt(email));
 
-    const attempts = this.failedAttempts.get(email) || 0;
+    // Aquí usas Redis, no el Map local
+    const attempts = await this.getFailedAttempts(email);
+
     if (attempts >= this.MAX_ATTEMPTS) {
       this.logger.warnUser(`Too many failed login attempts for ${email}`);
       throw new TooManyAttemptsException(
@@ -59,7 +72,7 @@ export class LoginUseCase {
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      this.incrementFailedAttempts(email);
+      await this.incrementFailedAttempts(email);
       this.logger.warnUser(this.messages.userNotFound(email));
       throw new UserNotFoundException(this.messages.userNotFound(email));
     }
@@ -68,17 +81,18 @@ export class LoginUseCase {
       this.logger.warnUser(`Inactive user tried to login: ${email}`);
       throw new UserInactiveException('User account is inactive');
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      this.incrementFailedAttempts(email);
+      await this.incrementFailedAttempts(email);
       this.logger.warnUser(this.messages.invalidCredentials(email));
       throw new InvalidCredentialsException(
         this.messages.invalidCredentials(email),
       );
     }
 
-    this.resetFailedAttempts(email);
+    await this.resetFailedAttempts(email);
 
     const payload = { sub: user.id, email: user.email };
     const token = this.jwtService.sign(payload);

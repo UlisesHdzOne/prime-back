@@ -12,12 +12,9 @@ import { ConfigModule } from '@nestjs/config';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
 import { JwtConfigModule } from 'src/shared/config/jwt-config.module';
-const useCases = 
-[
-  RegisterUseCase, 
-  LoginUseCase, 
-  LogoutUseCase
-];
+import { redisProvider } from 'src/shared/providers/redis.provider';
+import { RedisModule } from 'src/shared/infrastructure/redis/redis.module';
+const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
 
 @Module({
   imports: [
@@ -33,10 +30,13 @@ const useCases =
 
     PrismaModule,
     SharedModule,
+    RedisModule,
+    RedisModule,
   ],
   exports: [PrismaRevokedTokenRepository],
   controllers: [AuthController],
   providers: [
+    redisProvider,
     ...useCases,
     MessageService,
     AppLogger,
