@@ -4,11 +4,12 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { I18nService } from 'nestjs-i18n';
+import { MessageService } from '../services/message.service';
+
 @Injectable()
 @ValidatorConstraint({ name: 'IsStrongPassword', async: false })
 export class IsStrongPassword implements ValidatorConstraintInterface {
-  constructor(private readonly i18n: I18nService) {}
+  constructor(private readonly messages: MessageService) {}
 
   validate(password: string): boolean {
     const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
@@ -16,6 +17,6 @@ export class IsStrongPassword implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return this.i18n.t('VALIDATION.PASSWORD_STRENGTH');
+    return this.messages.passwordStrength();
   }
 }

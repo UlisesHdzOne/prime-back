@@ -55,7 +55,10 @@ export class AuthController {
   async register(@Body() dto: RegisterDto) {
     const user = await this.registerUseCase.execute(dto);
     this.logger.logUserSuccess(`User registered: ${user.email}`);
-    return { id: user.id, name: user.name, email: user.email };
+    return {
+      message: this.messages.userRegisteredSuccess(user.email),
+      user: { id: user.id, name: user.name, email: user.email },
+    };
   }
 
   // ==== LOGIN ====
@@ -84,7 +87,12 @@ export class AuthController {
     },
   })
   async login(@Body() dto: LoginDto) {
-    return await this.loginUseCase.execute(dto);
+    try {
+      return await this.loginUseCase.execute(dto);
+    } catch {
+      this.logger.warnUser('Invalid login attempt');
+      throw new Error(this.messages.invalidCredentials());
+    }
   }
 
   // ==== LOGOUT ====
@@ -121,7 +129,6 @@ export class AuthController {
     await this.logoutUseCase.execute(token);
     this.logger.logUserSuccess('Logout successful');
     const msg = this.messages.logoutSuccess();
-
     return { message: msg };
   }
 }

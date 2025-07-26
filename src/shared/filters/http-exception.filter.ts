@@ -6,14 +6,11 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { I18nService } from 'nestjs-i18n';
+import { MessageService } from '../services/message.service';
 @Catch()
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-
-  constructor(
-    private readonly i18n: I18nService
-  ) {}
+  constructor(private readonly messages: MessageService) {}
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
   async catch(exception: unknown, host: ArgumentsHost) {
@@ -33,7 +30,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           : (responseContent as any).message || message;
     }
 
-    const translated = await this.i18n.t(`exceptions.${message}`, {
+    const translated = this.messages.get(`exceptions.${message}`, {
       lang: request.headers['accept-language'] || 'en',
       args: (exception as any)?.response?.args || {},
     });
