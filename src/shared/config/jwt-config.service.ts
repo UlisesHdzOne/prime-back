@@ -1,3 +1,5 @@
+// src/shared/config/jwt-config.service.ts
+
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -10,9 +12,7 @@ import { JwtConfig } from './jwt.config.interface';
 
 @Injectable()
 export class JwtConfigService {
-  constructor(
-    private readonly configService: ConfigService
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   getJwtConfig(): JwtConfig {
     const secret = this.configService.get<string>('JWT_SECRET');
@@ -21,7 +21,7 @@ export class JwtConfigService {
     this.validateJwtConfig(secret, expiresIn);
 
     return {
-      secret: secret!, 
+      secret: secret!,
       expiresIn: expiresIn!,
       expiration: getMsFromExpiresIn(expiresIn!),
     };

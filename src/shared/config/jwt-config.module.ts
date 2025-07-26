@@ -1,17 +1,19 @@
+// src/shared/config/jwt-config.module.ts
+
 import { Module, Global } from '@nestjs/common';
-import { JwtProviderService } from './JwtProviderService';
+import { JwtConfigService } from './jwt-config.service';
 
 @Global()
 @Module({
   providers: [
-    JwtProviderService,
+    JwtConfigService,
     {
       provide: 'JWT_CONFIG',
-      useFactory: (jwtProviderService: JwtProviderService) =>
-        jwtProviderService.getConfig(),
-      inject: [JwtProviderService],
+      useFactory: (jwtConfigService: JwtConfigService) =>
+        jwtConfigService.getJwtConfig(),
+      inject: [JwtConfigService],
     },
   ],
-  exports: ['JWT_CONFIG', JwtProviderService],
+  exports: ['JWT_CONFIG', JwtConfigService],
 })
 export class JwtConfigModule {}

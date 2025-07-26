@@ -8,10 +8,9 @@ import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.
 import { PrismaRevokedTokenRepository } from './infrastructure/repositories/prisma-revoked-token.repository';
 import { SharedModule } from 'src/shared/shared.module';
 import { LoginUseCase } from './application/use-cases/login.use-case';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
-import { JwtProviderService } from 'src/shared/config/JwtProviderService';
 import { JwtConfigModule } from 'src/shared/config/jwt-config.module';
 const useCases = 
 [
@@ -42,7 +41,6 @@ const useCases =
     MessageService,
     AppLogger,
     PrismaRevokedTokenRepository,
-    JwtProviderService,
     {
       provide: 'IUserRepository',
       useClass: PrismaUserRepository,
