@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { SharedModule } from './shared/shared.module';
 import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
+import { SecurityMiddleware } from './core/security/security.middleware';
 
 import * as path from 'path';
 import { HealthModule } from './health/health.module';
@@ -35,4 +36,13 @@ import { AppController } from './app.controller';
   controllers: [AppController],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  constructor(private readonly configService: ConfigService) {}
+
+  configure(consumer: MiddlewareConsumer) {
+    // Aplicar middleware solo si no es entorno de test
+    if (this.configService.get('NODE_ENV') !== 'test') {
+      consumer.apply(SecurityMiddleware).forRoutes('*');
+    }
+  }
+}

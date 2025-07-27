@@ -2,19 +2,19 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:15-alpine  # Imagen ligera de PostgreSQL
     container_name: postgres-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}        # Usuario de la BD desde .env
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}# Contraseña desde .env
+      POSTGRES_DB: ${POSTGRES_DB}            # Nombre de la BD desde .env
     ports:
-      - '5434:5432'
+      - '5434:5432'  # Exponer puerto 5432 del contenedor al 5434 del host
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data  # Persistencia de datos de la BD
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"] # Verifica si la BD está lista
       interval: 5s
       timeout: 5s
       retries: 10
@@ -22,15 +22,15 @@ services:
       - app-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine  # Imagen ligera de Redis
     container_name: redis-cache
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '6379:6379'  # Puerto por defecto de Redis
     volumes:
-      - redisdata:/data
+      - redisdata:/data  # Persistencia de datos de Redis
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "ping"]  # Verifica que Redis responda "PONG"
       interval: 1s
       timeout: 3s
       retries: 30
@@ -40,38 +40,38 @@ services:
 
   backend:
     build:
-      context: .
+      context: .         # Construye desde el contexto actual
       dockerfile: Dockerfile
     container_name: prime-back
     ports:
-      - '3000:3000'
+      - '3000:3000'  # Expone el puerto 3000
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy   # Espera que la BD esté saludable
       redis:
-        condition: service_healthy
+        condition: service_healthy   # Espera que Redis esté saludable
     volumes:
-      - .:/app
-      - /app/node_modules
+      - .:/app             # Monta todo el código dentro del contenedor
+      - /app/node_modules  # Evita sobrescribir node_modules
     env_file:
-      - .env
+      - .env               # Carga variables de entorno desde archivo .env
     environment:
-      REDIS_HOST: redis-cache  # Nombre del contenedor Redis
+      REDIS_HOST: redis-cache  # Se conecta al contenedor Redis por nombre
       REDIS_PORT: 6379
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
     restart: unless-stopped
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]  # Verifica que el backend responda
       interval: 30s
       timeout: 10s
       retries: 3
 
 volumes:
-  pgdata:
-  redisdata:
+  pgdata:     # Volumen persistente para PostgreSQL
+  redisdata:  # Volumen persistente para Redis
 
 networks:
-  app-network:
+  app-network:  # Red interna para que los contenedores se comuniquen
     driver: bridge

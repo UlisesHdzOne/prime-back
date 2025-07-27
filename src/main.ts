@@ -4,6 +4,8 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AllExceptionsFilter } from './shared/filters/http-exception.filter';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -12,7 +14,7 @@ async function bootstrap() {
     // Espera inicial para dependencias (evita errores de conexión en entornos locales)
     if (process.env.NODE_ENV !== 'test') {
       logger.log('Esperando 5 segundos por servicios dependientes...');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
     const app = await NestFactory.create(AppModule, {
@@ -47,6 +49,60 @@ async function bootstrap() {
       const document = SwaggerModule.createDocument(app, swaggerConfig);
       SwaggerModule.setup('api', app, document);
       logger.log('Swagger disponible en /api');
+    }
+
+    const isProduction = configService.get('NODE_ENV') === 'production';
+
+    // Helmet básico para todos los entornos
+    app.use(helmet.frameguard({ action: 'deny' }));
+    app.use(helmet.noSniff());
+    app.use(helmet.hidePoweredBy());
+
+    // Helmet avanzado y rate limit solo en producción
+    if (isProduction) {
+      app.use(
+        helmet({
+          contentSecurityPolicy: {
+            directives: {
+              defaultSrc: ["'self'"],
+              scriptSrc: ["'self'"],
+              styleSrc: ["'self'", "'unsafe-inline'"],
+              imgSrc: ["'self'", 'data:'],
+              connectSrc: ["'self'"],
+              fontSrc: ["'self'"],
+              objectSrc: ["'none'"],
+              frameSrc: ["'none'"],
+              formAction: ["'self'"],
+            },
+          },
+          hsts: {
+            maxAge: 63072000,
+            includeSubDomains: true,
+            preload: true,
+          },
+          crossOriginEmbedderPolicy: true, // Nuevo
+          crossOriginOpenerPolicy: { policy: 'same-origin' }, // Nuevo
+          crossOriginResourcePolicy: { policy: 'same-origin' }, // Nuevo
+          referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+          frameguard: { action: 'deny' },
+          noSniff: true,
+          xssFilter: true, // Nuevo
+          permittedCrossDomainPolicies: { permittedPolicies: 'none' }, // Nuevo
+        }),
+      );
+
+      app.use(
+        rateLimit({
+          windowMs: 15 * 60 * 1000, // 15 minutos
+          max: 100, // Límite por IP
+          message:
+            'Demasiadas solicitudes desde esta IP, intenta nuevamente más tarde',
+        }),
+      );
+    } else {
+      // Configuración mínima para desarrollo
+      app.use(helmet.noSniff());
+      app.use(helmet.frameguard({ action: 'deny' }));
     }
 
     // Arranque del servidor
