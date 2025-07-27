@@ -7,6 +7,7 @@ import { SharedModule } from './shared/shared.module';
 import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 
 import * as path from 'path';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import * as path from 'path';
     PrismaModule,
     AuthModule,
     SharedModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
