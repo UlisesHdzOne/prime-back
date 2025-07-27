@@ -22,11 +22,19 @@ export class RedisConfig {
   }
 
   get options() {
-    return {
+    const options: any = {
       host: this.host,
       port: this.port,
-      ...(this.password && { password: this.password }),
-      ...(this.tls && { tls: {} }),
     };
+
+    if (this.password) {
+      options.password = this.password;
+    }
+
+    if (this.tls) {
+      options.tls = {};
+    }
+
+    return options;
   }
 }
