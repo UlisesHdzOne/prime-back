@@ -22,6 +22,9 @@ export class SecurityMiddleware implements NestMiddleware {
     }
 
     // Header de versión (personalizado)
+    // En security.middleware.ts
+    res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+    res.setHeader('X-DNS-Prefetch-Control', 'off');
     res.setHeader(
       'X-Api-Version',
       this.configService.get('API_VERSION') || '1.0',
