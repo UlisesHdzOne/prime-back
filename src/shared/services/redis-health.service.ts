@@ -14,7 +14,8 @@ export class RedisHealthService implements OnModuleInit {
       await this.redis.ping();
       return true;
     } catch (error) {
-      throw new Error(`Redis connection failed: ${error.message}`);
+      console.error('Redis health check failed:', error.message);
+      return false; // Return false instead of throwing
     }
   }
 

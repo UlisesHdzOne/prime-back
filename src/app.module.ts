@@ -8,6 +8,7 @@ import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 
 import * as path from 'path';
 import { HealthModule } from './health/health.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { HealthModule } from './health/health.module';
     SharedModule,
     HealthModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}
