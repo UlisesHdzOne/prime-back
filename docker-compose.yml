@@ -1,8 +1,7 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -11,11 +10,19 @@ services:
       - '5434:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - '6379:6379'
+    volumes:
+      - redisdata:/data
 
   backend:
     build:
@@ -24,9 +31,11 @@ services:
     container_name: prime-back
     ports:
       - '3000:3000'
-    depends_on:
-      - db
-      - redis
+    depends_on: 
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - .:/app
       - /app/node_modules
@@ -38,3 +47,4 @@ services:
 
 volumes:
   pgdata:
+  redisdata:

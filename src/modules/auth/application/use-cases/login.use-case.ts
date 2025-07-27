@@ -15,37 +15,55 @@ import Redis from 'ioredis';
 
 @Injectable()
 export class LoginUseCase {
-  private MAX_ATTEMPTS = 5;
+  private readonly MAX_ATTEMPTS = 5;
   private readonly BLOCK_TIME_SECONDS = 15 * 60;
 
   constructor(
-    @Inject('IUserRepository')
-    private userRepository: IUserRepository,
+    @Inject('IUserRepository') private userRepository: IUserRepository,
     private readonly jwtService: JwtService,
     private readonly logger: AppLogger,
     private readonly messages: MessageService,
     @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
   ) {}
 
-  private getKey(email: string) {
+  private getKey(email: string): string {
     return `login_attempts:${email}`;
   }
 
-  private async incrementFailedAttempts(email: string) {
-    const key = this.getKey(email);
-    const attempts = await this.redisClient.incr(key);
-    if (attempts === 1) {
-      await this.redisClient.expire(key, this.BLOCK_TIME_SECONDS);
+  private async safeRedisOperation<T>(
+    operation: () => Promise<T>,
+  ): Promise<T | null> {
+    try {
+      return await operation();
+    } catch (error) {
+      this.logger.error('Redis operation failed', error);
+      return null;
     }
-    return attempts;
+  }
+
+  private async incrementFailedAttempts(email: string): Promise<number> {
+    const result = await this.safeRedisOperation(async () => {
+      const key = this.getKey(email);
+      const attempts = await this.redisClient.incr(key);
+      if (attempts === 1) {
+        await this.redisClient.expire(key, this.BLOCK_TIME_SECONDS);
+      }
+      return attempts;
+    });
+
+    return result ?? 0; // manejo explícito de fallback
   }
 
   private async resetFailedAttempts(email: string) {
-    await this.redisClient.del(this.getKey(email));
+    await this.safeRedisOperation(() =>
+      this.redisClient.del(this.getKey(email)),
+    );
   }
 
-  private async getFailedAttempts(email: string) {
-    const attempts = await this.redisClient.get(this.getKey(email));
+  private async getFailedAttempts(email: string): Promise<number> {
+    const attempts = await this.safeRedisOperation(() =>
+      this.redisClient.get(this.getKey(email)),
+    );
     return Number(attempts) || 0;
   }
 
@@ -59,9 +77,7 @@ export class LoginUseCase {
 
     this.logger.logUserAttempt(this.messages.authLoginAttempt(email));
 
-    // Aquí usas Redis, no el Map local
     const attempts = await this.getFailedAttempts(email);
-
     if (attempts >= this.MAX_ATTEMPTS) {
       this.logger.warnUser(`Too many failed login attempts for ${email}`);
       throw new TooManyAttemptsException(
@@ -70,7 +86,6 @@ export class LoginUseCase {
     }
 
     const user = await this.userRepository.findByEmail(email);
-
     if (!user) {
       await this.incrementFailedAttempts(email);
       this.logger.warnUser(this.messages.userNotFound(email));
@@ -83,7 +98,6 @@ export class LoginUseCase {
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
       await this.incrementFailedAttempts(email);
       this.logger.warnUser(this.messages.invalidCredentials(email));

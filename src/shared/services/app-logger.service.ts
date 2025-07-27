@@ -78,4 +78,18 @@ export class AppLogger {
       timestamp: new Date().toISOString(),
     });
   }
+
+  error(message: string, error?: Error, context?: Record<string, unknown>) {
+  if (!this.shouldLog('error')) return;
+
+  this.logger.error({
+    message,
+    type: 'USER_ERROR',
+    level: 'error',
+    error: error ? this.serializeError(error) : undefined,
+    timestamp: new Date().toISOString(),
+    ...context,
+  });
+}
+
 }
