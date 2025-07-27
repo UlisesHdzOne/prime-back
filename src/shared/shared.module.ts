@@ -8,7 +8,7 @@ import { RedisHealthService } from './services/redis-health.service';
 
 @Global()
 @Module({
-    imports: [RedisModule],
+  imports: [RedisModule],
   providers: [
     AppLogger,
     MessageService,
@@ -21,7 +21,7 @@ import { RedisHealthService } from './services/redis-health.service';
     MessageService,
     AllExceptionsFilter,
     JwtConfigService,
-    RedisHealthService
+    RedisHealthService,
   ],
 })
 export class SharedModule {}

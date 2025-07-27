@@ -1,19 +1,19 @@
-// src/shared/infrastructure/redis/redis.module.ts
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { RedisConfig } from '../../config/redis.config';
 
 @Module({
   imports: [ConfigModule],
   providers: [
-    RedisConfig,
     {
       provide: 'REDIS_CLIENT',
-      inject: [RedisConfig],
-      useFactory: (redisConfig: RedisConfig) => {
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
         const redis = new Redis({
-          ...redisConfig.options,
+          host: configService.get<string>('REDIS_HOST') || 'localhost',
+          port: configService.get<number>('REDIS_PORT') || 6379,
+          password: configService.get<string>('REDIS_PASSWORD'),
+          tls: configService.get<string>('REDIS_TLS') === 'true' ? {} : undefined,
           retryStrategy: (times) => Math.min(times * 100, 5000),
           maxRetriesPerRequest: 3,
           reconnectOnError: (err) => /READONLY|ETIMEDOUT/.test(err.message),
@@ -21,8 +21,8 @@ import { RedisConfig } from '../../config/redis.config';
 
         redis.on('connect', () => console.log('Connected to Redis'));
         redis.on('error', (err) => console.error('Redis error:', err));
-        redis.on('reconnecting', (delay) =>
-          console.log(`Reconnecting in ${delay}ms`),
+        redis.on('reconnecting', (delay) => 
+          console.log(`Reconnecting in ${delay}ms`)
         );
 
         return redis;
