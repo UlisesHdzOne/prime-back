@@ -1,3 +1,4 @@
+// src/shared/infrastructure/redis/redis.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import Redis from 'ioredis';
@@ -21,7 +22,7 @@ import { RedisConfig } from '../../config/redis.config';
         redis.on('connect', () => console.log('Connected to Redis'));
         redis.on('error', (err) => console.error('Redis error:', err));
         redis.on('reconnecting', (delay) =>
-          console.log(`Reconnecting in ${delay}ms`)
+          console.log(`Reconnecting in ${delay}ms`),
         );
 
         return redis;
