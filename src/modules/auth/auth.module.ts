@@ -1,5 +1,5 @@
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AuthController } from './infrastructure/controllers/auth.controller';
@@ -13,6 +13,8 @@ import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
 import { JwtConfigModule } from 'src/shared/config/jwt-config.module';
 import { RedisModule } from 'src/shared/infrastructure/redis/redis.module';
+import { rateLimitMiddleware } from 'src/shared/config/middleware/rate-limit.middleware';
+import { CacheModule } from '@nestjs/cache-manager';
 const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
 
 @Module({
@@ -26,7 +28,7 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
         signOptions: { expiresIn: jwtConfig.expiresIn },
       }),
     }),
-
+    CacheModule.register(),
     PrismaModule,
     SharedModule,
     RedisModule,
@@ -49,4 +51,11 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
     },
   ],
 })
-export class AuthModule {}
+export class AuthModule  implements NestModule {
+
+   configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(rateLimitMiddleware)
+      .forRoutes('auth/login', 'auth/register'); // protege estas rutas
+  }
+}

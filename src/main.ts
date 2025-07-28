@@ -3,9 +3,10 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, Logger } from '@nestjs/common';
-import { AllExceptionsFilter } from './shared/filters/http-exception.filter';
+//import { AllExceptionsFilter } from './shared/filters/http-exception.filter';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { GlobalExceptionFilter } from './shared/filters/http-exception.filter';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -25,7 +26,7 @@ async function bootstrap() {
     const configService = app.get(ConfigService);
 
     // Filtro global para manejar excepciones personalizadas
-    app.useGlobalFilters(app.get(AllExceptionsFilter));
+    app.useGlobalFilters(app.get(GlobalExceptionFilter));
 
     // Validación global
     app.useGlobalPipes(

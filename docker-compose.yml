@@ -14,12 +14,18 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data  # Persistencia de datos de la BD
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"] # Verifica si la BD está lista
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-mydb}"] # Verifica si la BD está lista
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
       - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    
 
   redis:
     image: redis:7-alpine  # Imagen ligera de Redis
@@ -37,6 +43,11 @@ services:
       start_period: 5s
     networks:
       - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   backend:
     build:
@@ -58,7 +69,8 @@ services:
     environment:
       REDIS_HOST: redis-cache  # Se conecta al contenedor Redis por nombre
       REDIS_PORT: 6379
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
+      REDIS_TLS: ${REDIS_TLS:-false}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres-db:5432/${POSTGRES_DB:-mydb}
     restart: unless-stopped
     networks:
       - app-network

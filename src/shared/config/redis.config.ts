@@ -79,18 +79,18 @@ export class RedisConfig {
     return this.validatedConfig.REDIS_TLS || false;
   }
 
-get options() {
-  return {
-    host: process.env.REDIS_HOST || 'redis-cache', // Valor por defecto
-    port: parseInt(process.env.REDIS_PORT || '6379', 10), // Valor por defecto
-    retryStrategy: (times: number) => {
-      const delay = Math.min(times * 100, 5000);
-      console.log(`Redis retry attempt ${times}, delaying ${delay}ms`);
-      return delay;
-    },
-    maxRetriesPerRequest: null,
-    enableOfflineQueue: true,
-    connectTimeout: 10000,
-  };
-}
+  get options() {
+    return {
+      host: this.validatedConfig.REDIS_HOST,
+      port: this.validatedConfig.REDIS_PORT,
+      retryStrategy: (times: number) => {
+        const delay = Math.min(times * 100, 5000);
+        console.log(`Redis retry attempt ${times}, delaying ${delay}ms`);
+        return delay;
+      },
+      maxRetriesPerRequest: null,
+      enableOfflineQueue: true,
+      connectTimeout: 10000,
+    };
+  }
 }
