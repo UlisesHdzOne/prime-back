@@ -98,9 +98,10 @@ async function bootstrap() {
       app.use(
         rateLimit({
           windowMs: 15 * 60 * 1000, // 15 minutos
-          max: 100, // Límite por IP
+          max: isProduction ? 100 : 1000,
           message:
             'Demasiadas solicitudes desde esta IP, intenta nuevamente más tarde',
+              skip: (req) => req.path === '/health'
         }),
       );
     } else {

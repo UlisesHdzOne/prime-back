@@ -1,1 +1,1 @@
-export const SALT_ROUNDS = 10;
+export const SALT_ROUNDS = process.env.NODE_ENV === 'production' ? 12 : 10;
