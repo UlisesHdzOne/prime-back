@@ -28,7 +28,7 @@ export class RegisterUseCase {
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
       const msg = this.messageService.emailAlreadyRegistered();
-      this.logger.warnUser(msg);
+      this.logger.warn(msg);
       throw new EmailAlreadyRegisteredException(msg);
     }
 

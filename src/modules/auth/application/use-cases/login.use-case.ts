@@ -71,7 +71,7 @@ export class LoginUseCase {
     const { email, password } = dto;
 
     if (!email || !password) {
-      this.logger.warnUser('Login attempt with empty email or password');
+      this.logger.warn('Login attempt with empty email or password',undefined,{email});
       throw new BadRequestException('Email and password are required');
     }
 
@@ -79,7 +79,7 @@ export class LoginUseCase {
 
     const attempts = await this.getFailedAttempts(email);
     if (attempts >= this.MAX_ATTEMPTS) {
-      this.logger.warnUser(`Too many failed login attempts for ${email}`);
+      this.logger.warn(`Too many failed login attempts for ${email}`);
       throw new TooManyAttemptsException(
         'Too many failed login attempts. Try again later.',
       );
@@ -88,19 +88,19 @@ export class LoginUseCase {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       await this.incrementFailedAttempts(email);
-      this.logger.warnUser(this.messages.userNotFound(email));
+      this.logger.warn(this.messages.userNotFound(email));
       throw new UserNotFoundException(this.messages.userNotFound(email));
     }
 
     if (!user.isActive) {
-      this.logger.warnUser(`Inactive user tried to login: ${email}`);
+      this.logger.warn(`Inactive user tried to login: ${email}`);
       throw new UserInactiveException('User account is inactive');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       await this.incrementFailedAttempts(email);
-      this.logger.warnUser(this.messages.invalidCredentials(email));
+      this.logger.warn(this.messages.invalidCredentials(email));
       throw new InvalidCredentialsException(
         this.messages.invalidCredentials(email),
       );

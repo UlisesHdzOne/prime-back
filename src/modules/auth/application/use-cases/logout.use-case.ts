@@ -15,7 +15,7 @@ export class LogoutUseCase {
   async execute(token: string): Promise<{ message: string }> {
     if (!token) {
       const errorMessage = this.messageService.tokenMissing();
-      this.logger.warnUser(errorMessage);
+      this.logger.warn(errorMessage);
       throw new TokenMissingException();
     }
 

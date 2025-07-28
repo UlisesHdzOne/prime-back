@@ -90,7 +90,7 @@ export class AuthController {
     try {
       return await this.loginUseCase.execute(dto);
     } catch {
-      this.logger.warnUser('Invalid login attempt');
+      this.logger.warn('Invalid login attempt');
       throw new Error(this.messages.invalidCredentials());
     }
   }
@@ -122,7 +122,7 @@ export class AuthController {
   async logout(@Req() req: Request) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
-      this.logger.warnUser('Missing authorization header');
+      this.logger.warn('Missing authorization header');
       throw new TokenMissingException();
     }
     const token = authHeader.replace('Bearer ', '');
