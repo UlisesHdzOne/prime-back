@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { RedisHealthService } from 'src/shared/services/redis-health.service';
+import { RedisHealthService } from 'src/health/redis-health.service';
 
 @Controller('health')
 export class HealthController {
@@ -9,7 +9,7 @@ export class HealthController {
 
   @Get()
   async check() {
-    const redisStatus = await this.redisHealth.getStatus();
+    const redisStatus = await this.redisHealth.ping();
     return {
       status: 'OK',
       redis: redisStatus,

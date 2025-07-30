@@ -10,6 +10,7 @@ import { SecurityMiddleware } from './core/security/security.middleware';
 import * as path from 'path';
 import { HealthModule } from './health/health.module';
 import { AppController } from './app.controller';
+import { RedisModule } from './redis/infrastructure/redis.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AppController } from './app.controller';
     AuthModule,
     SharedModule,
     HealthModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [],

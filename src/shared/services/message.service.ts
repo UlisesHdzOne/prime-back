@@ -77,4 +77,8 @@ export class MessageService {
   userNotFound(email: string): string {
     return this.get(TranslationKeys.EXCEPTION_USER_NOT_FOUND, { email });
   }
+
+  passwordBreached(): string {
+    return this.get(TranslationKeys.PASSWORD_BREACHED);
+  }
 }

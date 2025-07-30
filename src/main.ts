@@ -3,32 +3,72 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, Logger } from '@nestjs/common';
-//import { AllExceptionsFilter } from './shared/filters/http-exception.filter';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { GlobalExceptionFilter } from './shared/filters/http-exception.filter';
+import { PrismaService } from './prisma/prisma.service';
+import { RedisService } from './redis/services/redis.service';
+import * as express from 'express';
+import * as path from 'path';
+
+async function waitForService(
+  checkFn: () => Promise<boolean>,
+  retries = 10,
+  delayMs = 1000,
+  serviceName = 'service',
+) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      if (await checkFn()) return;
+    } catch {}
+    console.log(
+      `${serviceName} no listo, reintentando... (${i + 1}/${retries})`,
+    );
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  throw new Error(`${serviceName} no respondió a tiempo`);
+}
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   try {
-    // Espera inicial para dependencias (evita errores de conexión en entornos locales)
-    if (process.env.NODE_ENV !== 'test') {
-      logger.log('Esperando 5 segundos por servicios dependientes...');
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
-
     const app = await NestFactory.create(AppModule, {
       logger: ['log', 'error', 'warn', 'debug', 'verbose'],
       bufferLogs: true,
     });
 
     const configService = app.get(ConfigService);
+    const redisService = app.get(RedisService); // ← obtiene tu servicio
+    const redisClient = redisService.getClient(); // ← obtiene el cliente ioredis
+    const prismaService = app.get(PrismaService);
 
-    // Filtro global para manejar excepciones personalizadas
+    logger.log('Esperando servicios...');
+
+    await waitForService(
+      async () => {
+        const pong = await redisClient.ping();
+        return pong === 'PONG';
+      },
+      10,
+      1000,
+      'Redis',
+    );
+
+    await waitForService(
+      async () => {
+        await prismaService.$queryRaw`SELECT 1`;
+        return true;
+      },
+      10,
+      1000,
+      'Postgres',
+    );
+
+    logger.log('Servicios listos, arrancando aplicación');
+
     app.useGlobalFilters(app.get(GlobalExceptionFilter));
 
-    // Validación global
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -38,7 +78,6 @@ async function bootstrap() {
       }),
     );
 
-    // Documentación Swagger (solo si no es producción)
     if (configService.get('NODE_ENV') !== 'production') {
       const swaggerConfig = new DocumentBuilder()
         .setTitle('Auth API')
@@ -54,23 +93,17 @@ async function bootstrap() {
 
     const isProduction = configService.get('NODE_ENV') === 'production';
 
-    // Helmet básico para todos los entornos
     app.use(helmet.frameguard({ action: 'deny' }));
     app.use(helmet.noSniff());
     app.use(helmet.hidePoweredBy());
 
-    // Helmet avanzado y rate limit solo en producción
     if (isProduction) {
       app.use(
         helmet({
           contentSecurityPolicy: {
             directives: {
               defaultSrc: ["'self'"],
-              scriptSrc: [
-                "'self'",
-                "'unsafe-inline'", // Solo en desarrollo
-                "'unsafe-eval'", 
-              ],
+              scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
               styleSrc: ["'self'", "'unsafe-inline'"],
               imgSrc: ["'self'", 'data:'],
               connectSrc: ["'self'"],
@@ -85,35 +118,39 @@ async function bootstrap() {
             includeSubDomains: true,
             preload: true,
           },
-          crossOriginEmbedderPolicy: true, // Nuevo
-          crossOriginOpenerPolicy: { policy: 'same-origin' }, // Nuevo
-          crossOriginResourcePolicy: { policy: 'same-origin' }, // Nuevo
+          crossOriginEmbedderPolicy: true,
+          crossOriginOpenerPolicy: { policy: 'same-origin' },
+          crossOriginResourcePolicy: { policy: 'same-origin' },
           referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
           frameguard: { action: 'deny' },
           noSniff: true,
-          xssFilter: true, // Nuevo
-          permittedCrossDomainPolicies: { permittedPolicies: 'none' }, // Nuevo
+          xssFilter: true,
+          permittedCrossDomainPolicies: { permittedPolicies: 'none' },
         }),
       );
 
       app.use(
         rateLimit({
-          windowMs: 15 * 60 * 1000, // 15 minutos
-          max: isProduction ? 100 : 1000,
+          windowMs: 15 * 60 * 1000,
+          max: 100,
           message:
             'Demasiadas solicitudes desde esta IP, intenta nuevamente más tarde',
-              skip: (req) => req.path === '/health'
+          skip: (req) => req.path === '/health',
         }),
       );
     } else {
-      // Configuración mínima para desarrollo
       app.use(helmet.noSniff());
       app.use(helmet.frameguard({ action: 'deny' }));
     }
 
-    // Arranque del servidor
+    app.use(
+      '/favicon.ico',
+      express.static(path.join(__dirname, '..', 'public', 'favicon.ico')),
+    );
+
     const port = configService.get<number>('PORT') || 3000;
     await app.listen(port);
+
     logger.log(`Aplicación corriendo en: http://localhost:${port}`);
     logger.log(`Entorno: ${configService.get('NODE_ENV')}`);
   } catch (error) {

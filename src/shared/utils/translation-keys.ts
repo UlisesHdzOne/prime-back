@@ -19,4 +19,5 @@ export enum TranslationKeys {
   EXCEPTION_INTERNAL_SERVER_ERROR = 'exceptions.internalServerError',
   USER_REGISTRATION_ATTEMPT = 'auth.registration.attempt',
   USER_REGISTRATION_SUCCESS = 'auth.registration.success',
+  PASSWORD_BREACHED = 'auth.registration.passwordBreached',
 }

@@ -12,7 +12,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
 import { JwtConfigModule } from 'src/shared/config/jwt-config.module';
-import { RedisModule } from 'src/shared/infrastructure/redis/redis.module';
+import { RedisModule } from 'src/redis/infrastructure/redis.module';
 import { rateLimitMiddleware } from 'src/shared/config/middleware/rate-limit.middleware';
 import { CacheModule } from '@nestjs/cache-manager';
 const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];

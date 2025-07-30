@@ -36,6 +36,15 @@ export class JwtConfigService {
       throw new WeakSecretException();
     }
 
+    if (
+      secret === 'changeme' &&
+      this.configService.get('NODE_ENV') === 'production'
+    ) {
+      throw new InvalidJwtConfigException(
+        'No usar secretos por defecto en producción',
+      );
+    }
+
     try {
       getMsFromExpiresIn(expiresIn);
     } catch (error: any) {

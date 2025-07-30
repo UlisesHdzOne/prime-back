@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { LoginDto } from '../dto/login.dto';
 import { MessageService } from 'src/shared/services/message.service';
-import Redis from 'ioredis';
+import { RedisService } from 'src/redis/services/redis.service';
 
 @Injectable()
 export class LoginUseCase {
@@ -23,47 +23,33 @@ export class LoginUseCase {
     private readonly jwtService: JwtService,
     private readonly logger: AppLogger,
     private readonly messages: MessageService,
-    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
+    private readonly redisService: RedisService, // Inyectado RedisService
   ) {}
 
   private getKey(email: string): string {
     return `login_attempts:${email}`;
   }
 
-  private async safeRedisOperation<T>(
-    operation: () => Promise<T>,
-  ): Promise<T | null> {
-    try {
-      return await operation();
-    } catch (error) {
-      this.logger.error('Redis operation failed', error);
-      return null;
-    }
-  }
-
   private async incrementFailedAttempts(email: string): Promise<number> {
-    const result = await this.safeRedisOperation(async () => {
-      const key = this.getKey(email);
-      const attempts = await this.redisClient.incr(key);
-      if (attempts === 1) {
-        await this.redisClient.expire(key, this.BLOCK_TIME_SECONDS);
-      }
-      return attempts;
-    });
+    const attempts = await this.redisService.get(this.getKey(email));
+    let newAttempts = Number(attempts) || 0;
+    newAttempts++;
 
-    return result ?? 0; // manejo explícito de fallback
+    await this.redisService.set(
+      this.getKey(email),
+      String(newAttempts),
+      this.BLOCK_TIME_SECONDS,
+    );
+
+    return newAttempts;
   }
 
   private async resetFailedAttempts(email: string) {
-    await this.safeRedisOperation(() =>
-      this.redisClient.del(this.getKey(email)),
-    );
+    await this.redisService.del(this.getKey(email));
   }
 
   private async getFailedAttempts(email: string): Promise<number> {
-    const attempts = await this.safeRedisOperation(() =>
-      this.redisClient.get(this.getKey(email)),
-    );
+    const attempts = await this.redisService.get(this.getKey(email));
     return Number(attempts) || 0;
   }
 
@@ -71,7 +57,11 @@ export class LoginUseCase {
     const { email, password } = dto;
 
     if (!email || !password) {
-      this.logger.warn('Login attempt with empty email or password',undefined,{email});
+      this.logger.warn(
+        'Login attempt with empty email or password',
+        undefined,
+        { email },
+      );
       throw new BadRequestException('Email and password are required');
     }
 

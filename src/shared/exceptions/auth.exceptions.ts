@@ -160,3 +160,16 @@ export class UserInactiveException extends HttpException {
     );
   }
 }
+
+export class PasswordBreachedException extends HttpException {
+  constructor(msg?:string) {
+    super(
+      {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: msg?? i18nValidationMessage('exceptions.passwordBreached'),
+        error: 'Password Breached',
+      },
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
