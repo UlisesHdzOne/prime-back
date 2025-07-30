@@ -7,7 +7,6 @@ export class SecurityMiddleware implements NestMiddleware {
   private readonly allowedOrigins: string[];
 
   constructor(private readonly configService: ConfigService) {
-    // Configuración de orígenes permitidos desde variables de entorno
     this.allowedOrigins =
       this.configService.get('CORS_ALLOWED_ORIGINS')?.split(',') || [];
   }
@@ -15,7 +14,7 @@ export class SecurityMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const isProduction = this.configService.get('NODE_ENV') === 'production';
 
-    // Headers aplicados en todos los entornos
+    // Headers comunes
     res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
     res.setHeader('X-DNS-Prefetch-Control', 'off');
     res.setHeader(
@@ -23,46 +22,30 @@ export class SecurityMiddleware implements NestMiddleware {
       this.configService.get('API_VERSION') || '1.0',
     );
 
-    // Configuración específica para producción
+    // Seguridad adicional en producción
     if (isProduction) {
-      // Headers de seguridad
       res.setHeader(
         'Permissions-Policy',
-        [
-          'geolocation=()',
-          'microphone=()',
-          'camera=()',
-          'fullscreen=(self)',
-        ].join(', '),
+        'geolocation=(), microphone=(), camera=(), fullscreen=(self)',
       );
-
       res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
       res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
       res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-
-      // CORS dinámico basado en origen solicitante
-      const requestOrigin = req.headers.origin;
-
-      if (requestOrigin && this.allowedOrigins.includes(requestOrigin)) {
-        res.setHeader('Access-Control-Allow-Origin', requestOrigin);
-      }
-
-      res.setHeader('Vary', 'Origin');
-
-      // Headers adicionales recomendados
-      res.setHeader(
-        'Access-Control-Allow-Methods',
-        'GET, POST, PUT, PATCH, DELETE',
-      );
-      res.setHeader(
-        'Access-Control-Allow-Headers',
-        'Content-Type, Authorization',
-      );
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-    } else {
-      // Configuración flexible para desarrollo
-      res.setHeader('Access-Control-Allow-Origin', '*');
     }
+
+    // CORS dinámico
+    const origin = req.headers.origin;
+    const devOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+    const allowed = isProduction ? this.allowedOrigins : devOrigins;
+
+    if (origin && allowed.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     next();
   }

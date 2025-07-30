@@ -39,17 +39,14 @@ async function bootstrap() {
     });
 
     const configService = app.get(ConfigService);
-    const redisService = app.get(RedisService); // ← obtiene tu servicio
-    const redisClient = redisService.getClient(); // ← obtiene el cliente ioredis
+    const redisService = app.get(RedisService);
+    const redisClient = redisService.getClient();
     const prismaService = app.get(PrismaService);
 
     logger.log('Esperando servicios...');
 
     await waitForService(
-      async () => {
-        const pong = await redisClient.ping();
-        return pong === 'PONG';
-      },
+      async () => (await redisClient.ping()) === 'PONG',
       10,
       1000,
       'Redis',
@@ -93,42 +90,51 @@ async function bootstrap() {
 
     const isProduction = configService.get('NODE_ENV') === 'production';
 
-    app.use(helmet.frameguard({ action: 'deny' }));
-    app.use(helmet.noSniff());
-    app.use(helmet.hidePoweredBy());
+    // Helmet (una sola vez)
+    app.use(
+      helmet({
+        contentSecurityPolicy: isProduction
+          ? {
+              directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", 'data:'],
+                connectSrc: ["'self'"],
+                fontSrc: ["'self'"],
+                objectSrc: ["'none'"],
+                frameSrc: ["'none'"],
+                formAction: ["'self'"],
+              },
+            }
+          : false,
+        hsts: isProduction
+          ? {
+              maxAge: 63072000,
+              includeSubDomains: true,
+              preload: true,
+            }
+          : false,
+        crossOriginEmbedderPolicy: isProduction,
+        crossOriginOpenerPolicy: isProduction
+          ? { policy: 'same-origin' }
+          : false,
+        crossOriginResourcePolicy: isProduction
+          ? { policy: 'same-origin' }
+          : false,
+        referrerPolicy: isProduction
+          ? { policy: 'strict-origin-when-cross-origin' }
+          : false,
+        frameguard: { action: 'deny' },
+        noSniff: true,
+        hidePoweredBy: true,
+        xssFilter: true,
+        permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+      }),
+    );
 
+    // Rate limit solo en producción
     if (isProduction) {
-      app.use(
-        helmet({
-          contentSecurityPolicy: {
-            directives: {
-              defaultSrc: ["'self'"],
-              scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-              styleSrc: ["'self'", "'unsafe-inline'"],
-              imgSrc: ["'self'", 'data:'],
-              connectSrc: ["'self'"],
-              fontSrc: ["'self'"],
-              objectSrc: ["'none'"],
-              frameSrc: ["'none'"],
-              formAction: ["'self'"],
-            },
-          },
-          hsts: {
-            maxAge: 63072000,
-            includeSubDomains: true,
-            preload: true,
-          },
-          crossOriginEmbedderPolicy: true,
-          crossOriginOpenerPolicy: { policy: 'same-origin' },
-          crossOriginResourcePolicy: { policy: 'same-origin' },
-          referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-          frameguard: { action: 'deny' },
-          noSniff: true,
-          xssFilter: true,
-          permittedCrossDomainPolicies: { permittedPolicies: 'none' },
-        }),
-      );
-
       app.use(
         rateLimit({
           windowMs: 15 * 60 * 1000,
@@ -138,9 +144,6 @@ async function bootstrap() {
           skip: (req) => req.path === '/health',
         }),
       );
-    } else {
-      app.use(helmet.noSniff());
-      app.use(helmet.frameguard({ action: 'deny' }));
     }
 
     app.use(
