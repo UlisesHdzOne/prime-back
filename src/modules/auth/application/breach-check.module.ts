@@ -7,6 +7,7 @@ import { NotificationService } from 'src/shared/services/notification.service';
 
 @Module({
   imports: [
+    // Registrar la cola 'breachCheck' aquí
     BullModule.registerQueue({
       name: 'breachCheck',
       defaultJobOptions: {
@@ -14,7 +15,9 @@ import { NotificationService } from 'src/shared/services/notification.service';
         backoff: { type: 'exponential', delay: 1000 },
         removeOnComplete: true,
         removeOnFail: true,
+        timeout: 60_000,
       },
+      limiter: { max: 5, duration: 1_000 },
     }),
   ],
   providers: [
@@ -22,6 +25,11 @@ import { NotificationService } from 'src/shared/services/notification.service';
     hibpHttpClientFactory,
     PasswordService,
     NotificationService,
+  ],
+  exports: [
+    BullModule,
+    NotificationService,
+    PasswordService,
   ],
 })
 export class BreachCheckModule {}

@@ -15,10 +15,13 @@ import { JwtConfigModule } from 'src/shared/config/jwt-config.module';
 import { RedisModule } from 'src/redis/infrastructure/redis.module';
 import { rateLimitMiddleware } from 'src/shared/config/middleware/rate-limit.middleware';
 import { CacheModule } from '@nestjs/cache-manager';
-import { BullModule } from '@nestjs/bull';
-import { BreachCheckProcessor } from './application/processors/breach-check.processor';
 import { BreachCheckModule } from './application/breach-check.module';
-const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
+
+const useCases = [
+  RegisterUseCase,
+  LoginUseCase,
+  LogoutUseCase,
+];
 
 @Module({
   imports: [
@@ -31,33 +34,18 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
         signOptions: { expiresIn: jwtConfig.expiresIn },
       }),
     }),
-    BullModule.registerQueue({
-      name: 'breachCheck',
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    }),
     CacheModule.register(),
     PrismaModule,
     SharedModule,
-    RedisModule,
-    RedisModule,
-    BreachCheckModule,
+    RedisModule,  
+    BreachCheckModule,    
   ],
-  exports: [PrismaRevokedTokenRepository],
   controllers: [AuthController],
   providers: [
     ...useCases,
     MessageService,
     AppLogger,
     PrismaRevokedTokenRepository,
-    BreachCheckProcessor,
     {
       provide: 'IUserRepository',
       useClass: PrismaUserRepository,
@@ -67,11 +55,12 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
       useClass: PrismaRevokedTokenRepository,
     },
   ],
+  exports: [PrismaRevokedTokenRepository],
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(rateLimitMiddleware)
-      .forRoutes('auth/login', 'auth/register'); // protege estas rutas
+      .forRoutes('auth/login', 'auth/register');
   }
 }
