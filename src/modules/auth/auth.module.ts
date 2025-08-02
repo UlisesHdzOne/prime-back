@@ -17,6 +17,7 @@ import { rateLimitMiddleware } from 'src/shared/config/middleware/rate-limit.mid
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bull';
 import { BreachCheckProcessor } from './application/processors/breach-check.processor';
+import { BreachCheckModule } from './application/breach-check.module';
 const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
 
 @Module({
@@ -38,6 +39,8 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
           type: 'exponential',
           delay: 1000,
         },
+        removeOnComplete: true,
+        removeOnFail: true,
       },
     }),
     CacheModule.register(),
@@ -45,6 +48,7 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
     SharedModule,
     RedisModule,
     RedisModule,
+    BreachCheckModule,
   ],
   exports: [PrismaRevokedTokenRepository],
   controllers: [AuthController],

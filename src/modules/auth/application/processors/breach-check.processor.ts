@@ -1,62 +1,80 @@
-// src/modules/auth/application/processors/breach-check.processor.ts
-
-import { Processor, Process, OnQueueFailed } from '@nestjs/bull';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  Process,
+  Processor,
+  OnQueueFailed,
+  OnQueueCompleted,
+} from '@nestjs/bull';
 import { Job } from 'bull';
-import axios from 'axios';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { AppLogger } from 'src/shared/services/app-logger.service';
-import { MessageService } from 'src/shared/services/message.service';
 import { User } from '../../domain/entities/user.entity';
+import { PasswordService } from 'src/shared/services/password.service';
+import { Counter, register } from 'prom-client';
+import { NotificationService } from 'src/shared/services/notification.service';
+
+const passwordsChecked = new Counter({
+  name: 'passwords_checked_total',
+  help: 'Total passwords checked for breach',
+});
+
+const breachesDetected = new Counter({
+  name: 'password_breaches_detected_total',
+  help: 'Total breached passwords detected',
+});
 
 @Processor('breachCheck')
+@Injectable()
 export class BreachCheckProcessor {
+  private readonly logger = new Logger(BreachCheckProcessor.name);
+
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly logger: AppLogger,
-    private readonly messages: MessageService,
+    @Inject('HIBP_CLIENT') private readonly httpClient,
+    private readonly passwordService: PasswordService,
+    private readonly notificationService: NotificationService,
   ) {}
 
-  @Process()
-  async handleBreachCheck(job: Job<{ user: User; passwordHash: string }>) {
-    const { user, passwordHash } = job.data;
+  @Process('breachCheck')
+  async handleBreachCheck(job: Job<{ user: User; password: string }>) {
+    const { user, password } = job.data;
 
-    try {
-      const prefix = passwordHash.substring(0, 5);
-      const suffix = passwordHash.substring(5);
+    passwordsChecked.inc();
 
-      const { data } = await axios.get(
-        `https://api.pwnedpasswords.com/range/${prefix}`,
+    // Usas el servicio para calcular el hash aquí
+    const sha1Hash = this.passwordService.getSha1Hash(password);
+    const prefix = sha1Hash.substring(0, 5);
+    const suffix = sha1Hash.substring(5);
+
+    const response = await this.httpClient.get(`/range/${prefix}`);
+    const breached = response.data
+      .split('\n')
+      .some((line) => line.startsWith(suffix));
+
+    if (breached) {
+      breachesDetected.inc();
+      this.logger.warn(
+        `Contraseña comprometida detectada para usuario ${user.email}`,
       );
-
-      const isBreached = data
-        .split('\n')
-        .some((line: string) => line.startsWith(suffix));
-
-      if (isBreached) {
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: { isBreached: true },
-        });
-        this.logger.warn(this.messages.passwordBreached(), {
-          userId: user.id,
-          email: user.email,
-        });
-      }
-
-      this.logger.logUserSuccess(`Finished breach check for ${user.email}`);
-    } catch (error) {
-      this.logger.error('Error in breach check processor', error, {
-        jobId: job.id,
-      });
-      throw error;
+      await this.notifyUser(user);
+    } else {
+      this.logger.log(`Contraseña limpia para usuario ${user.email}`);
     }
   }
 
+  async notifyUser(user: User) {
+    await this.notificationService.notifyPasswordBreach(user);
+  }
+
   @OnQueueFailed()
-  async onFailed(job: Job, error: Error) {
-    this.logger.error(
-      `Job ${job.id} failed for user ${job.data.user.email}`,
-      error,
-    );
+  onFailed(job: Job, error: Error) {
+    this.logger.error(`Job ${job.id} falló: ${error.message}`, error.stack);
+  }
+
+  @OnQueueCompleted()
+  async onCompleted(job: Job) {
+    await job.remove();
+  }
+
+  // Método para exponer métricas, úsalo en un controller o endpoint
+  async getMetrics(): Promise<string> {
+    return register.metrics();
   }
 }

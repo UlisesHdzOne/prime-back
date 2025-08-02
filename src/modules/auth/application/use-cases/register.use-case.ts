@@ -2,19 +2,15 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import * as bcrypt from 'bcrypt';
-import axios from 'axios';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
 import { RegisterDto } from '../dto/register.dto';
 
 import { AppLogger } from 'src/shared/services/app-logger.service';
 import { MessageService } from 'src/shared/services/message.service';
-import {
-  EmailAlreadyRegisteredException,
-  PasswordBreachedException,
-} from 'src/shared/exceptions/auth.exceptions';
+import { EmailAlreadyRegisteredException } from 'src/shared/exceptions/auth.exceptions';
 import { SALT_ROUNDS } from 'src/shared/constants';
-import * as crypto from 'crypto';
+
 @Injectable()
 export class RegisterUseCase {
   constructor(
@@ -44,15 +40,10 @@ export class RegisterUseCase {
 
     const createdUser = await this.userRepository.create(user);
 
-    const sha1Hash = crypto
-      .createHash('sha1')
-      .update(password)
-      .digest('hex')
-      .toUpperCase();
-
+    // Enviar password en texto plano para que el processor calcule hash
     await this.breachCheckQueue.add({
       user: createdUser,
-      passwordHash: sha1Hash,
+      password,
     });
 
     this.logger.logUserSuccess(
