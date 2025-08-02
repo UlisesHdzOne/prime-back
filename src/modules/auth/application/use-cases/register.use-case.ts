@@ -44,9 +44,15 @@ export class RegisterUseCase {
 
     const createdUser = await this.userRepository.create(user);
 
+    const sha1Hash = crypto
+      .createHash('sha1')
+      .update(password)
+      .digest('hex')
+      .toUpperCase();
+
     await this.breachCheckQueue.add({
       user: createdUser,
-      password,
+      passwordHash: sha1Hash,
     });
 
     this.logger.logUserSuccess(
@@ -55,6 +61,4 @@ export class RegisterUseCase {
 
     return createdUser;
   }
-
-
 }

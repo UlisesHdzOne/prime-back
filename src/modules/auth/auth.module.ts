@@ -32,6 +32,13 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
     }),
     BullModule.registerQueue({
       name: 'breachCheck',
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000,
+        },
+      },
     }),
     CacheModule.register(),
     PrismaModule,

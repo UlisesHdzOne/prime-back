@@ -22,6 +22,8 @@
     "test:security:prod": "NODE_ENV=production jest test/security.e2e-spec.ts"
   },
   "dependencies": {
+    "@bull-board/api": "^6.12.0",
+    "@bull-board/express": "^6.12.0",
     "@nestjs/bull": "^11.0.3",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",

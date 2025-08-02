@@ -62,6 +62,13 @@ async function bootstrap() {
       'Postgres',
     );
 
+    // Registra BullBoard aquí
+    const { QueueDashboardModule } = await import(
+      './queue-dashboard/queue-dashboard.module'
+    );
+    const dashboardModule = new QueueDashboardModule(app);
+    await dashboardModule.onModuleInit();
+
     logger.log('Servicios listos, arrancando aplicación');
 
     app.useGlobalFilters(app.get(GlobalExceptionFilter));
