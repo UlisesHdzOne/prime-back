@@ -11,6 +11,7 @@ import * as path from 'path';
 import { HealthModule } from './health/health.module';
 import { AppController } from './app.controller';
 import { RedisModule } from './redis/infrastructure/redis.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -27,6 +28,17 @@ import { RedisModule } from './redis/infrastructure/redis.module';
       resolvers: [
         { use: AcceptLanguageResolver, options: { matchType: 'strict' } },
       ],
+    }),
+    BullModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        redis: {
+          host: configService.get('REDIS_HOST'),
+          port: configService.get('REDIS_PORT'),
+          password: configService.get('REDIS_PASSWORD'),
+          tls: configService.get<boolean>('REDIS_TLS') ? {} : undefined,
+        },
+      }),
+      inject: [ConfigService],
     }),
 
     PrismaModule,

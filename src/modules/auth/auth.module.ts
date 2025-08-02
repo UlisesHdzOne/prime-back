@@ -15,6 +15,8 @@ import { JwtConfigModule } from 'src/shared/config/jwt-config.module';
 import { RedisModule } from 'src/redis/infrastructure/redis.module';
 import { rateLimitMiddleware } from 'src/shared/config/middleware/rate-limit.middleware';
 import { CacheModule } from '@nestjs/cache-manager';
+import { BullModule } from '@nestjs/bull';
+import { BreachCheckProcessor } from './application/processors/breach-check.processor';
 const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
 
 @Module({
@@ -27,6 +29,9 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
         secret: jwtConfig.secret,
         signOptions: { expiresIn: jwtConfig.expiresIn },
       }),
+    }),
+    BullModule.registerQueue({
+      name: 'breachCheck',
     }),
     CacheModule.register(),
     PrismaModule,
@@ -41,6 +46,7 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
     MessageService,
     AppLogger,
     PrismaRevokedTokenRepository,
+    BreachCheckProcessor,
     {
       provide: 'IUserRepository',
       useClass: PrismaUserRepository,
@@ -51,9 +57,8 @@ const useCases = [RegisterUseCase, LoginUseCase, LogoutUseCase];
     },
   ],
 })
-export class AuthModule  implements NestModule {
-
-   configure(consumer: MiddlewareConsumer) {
+export class AuthModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(rateLimitMiddleware)
       .forRoutes('auth/login', 'auth/register'); // protege estas rutas
