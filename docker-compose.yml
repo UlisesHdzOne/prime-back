@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER} # Usuario de la BD desde .env
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}# Contraseña desde .env
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB} # Nombre de la BD desde .env
     ports:
       - '5434:5432' # Exponer puerto 5432 del contenedor al 5434 del host
@@ -76,7 +76,7 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_TLS: ${REDIS_TLS:-false}
-      DATABASE_URL: 'postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres-db:5432/${POSTGRES_DB:-mydb}'
+      DATABASE_URL: ${DATABASE_URL}
     restart: unless-stopped
     networks:
       - app-network

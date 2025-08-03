@@ -109,17 +109,18 @@ export class InvalidJwtConfigException extends HttpException {
 }
 
 export class WeakSecretException extends HttpException {
-  constructor() {
+  constructor(message?: string) {
     super(
       {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: i18nValidationMessage('exceptions.jwt.weakSecret'),
+        message: message ?? i18nValidationMessage('exceptions.jwt.weakSecret'),
         error: 'Weak JWT Secret',
       },
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
 }
+
 
 export class InvalidExpiresInFormatException extends HttpException {
   constructor(details: string) {
@@ -173,3 +174,4 @@ export class PasswordBreachedException extends HttpException {
     );
   }
 }
+

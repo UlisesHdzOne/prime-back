@@ -1,0 +1,18 @@
+export const ENV_KEYS = Object.freeze([
+  'NODE_ENV',
+  'API_VERSION',
+  'POSTGRES_USER',
+  'POSTGRES_PASSWORD',
+  'POSTGRES_DB',
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'JWT_EXPIRES_IN',
+  'CORS_ALLOWED_ORIGINS',
+  'REDIS_HOST',
+  'REDIS_PORT',
+  'REDIS_PASSWORD',
+  'REDIS_TLS',
+  'PORT',
+  'SENTRY_DSN',
+  'APP_NAME',
+] as const);
