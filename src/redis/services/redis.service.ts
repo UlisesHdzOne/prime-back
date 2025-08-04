@@ -22,6 +22,11 @@ export class RedisService implements IRedisClient, OnModuleDestroy {
     return this.executeWithRetry(() => this.client.get(key), 'GET');
   }
 
+  private logRetryMetrics(operation: string, success: boolean) {
+    // Aquí enviar métricas a tu sistema (Prometheus, Datadog, etc.)
+    this.logger.info(`Retry metrics for ${operation}: success = ${success}`);
+  }
+
   async set(
     key: string,
     value: string,
@@ -48,8 +53,11 @@ export class RedisService implements IRedisClient, OnModuleDestroy {
     return retry(
       async () => {
         try {
-          return await fn();
+          const result = await fn();
+          this.logRetryMetrics(operation, true); // Reporta éxito
+          return result;
         } catch (error) {
+          this.logRetryMetrics(operation, false); // Reporta fallo
           this.logger.error(`${operation} failed: ${error.message}`);
           throw error;
         }

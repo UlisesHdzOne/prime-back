@@ -36,7 +36,7 @@ export class RedisConfig {
 
     const errors = validateSync(validated, { whitelist: true });
     if (errors.length > 0) {
-      throw new Error(`Redis config validation failed: ${errors.toString()}`);
+      throw new Error(`Redis config validation failed: ${errors.map(e => e.toString()).join(', ')}`);
     }
 
     if (process.env.NODE_ENV === 'production' && !validated.REDIS_PASSWORD) {
