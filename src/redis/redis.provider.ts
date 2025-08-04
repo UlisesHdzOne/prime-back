@@ -1,15 +1,22 @@
 import Redis from 'ioredis';
-import { ConfigService } from '@nestjs/config';
+import { RedisConfig } from './config/redis.config';
 
 export const redisProvider = {
   provide: 'REDIS_CLIENT',
-  inject: [ConfigService],
-  useFactory: (config: ConfigService) => {
-    return new Redis({
-      host: config.get('REDIS_HOST'),
-      port: config.get('REDIS_PORT'),
-      password: config.get('REDIS_PASSWORD'),
-      tls: config.get('REDIS_TLS') === 'true' ? {} : undefined,
-    });
+  useFactory: (config: RedisConfig) => {
+    const options: any = {
+      host: config.host,
+      port: config.port,
+      password: config.password,
+    };
+
+    if (config.tlsEnabled) {
+      options.tls = {
+        rejectUnauthorized: true,
+      };
+    }
+
+    return new Redis(options);
   },
+  inject: [RedisConfig],
 };

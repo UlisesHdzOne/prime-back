@@ -1,67 +1,51 @@
+// src/redis/config/redis.config.ts
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { plainToInstance, Transform } from 'class-transformer';
-import {
-  IsBoolean,
-  IsNumber,
-  IsOptional,
-  IsString,
-  validateSync,
-} from 'class-validator';
+import { plainToInstance } from 'class-transformer';
+import { validateSync, MinLength, IsBooleanString, IsOptional, IsString } from 'class-validator';
 
 class RedisConfigSchema {
   @IsString()
   REDIS_HOST: string;
 
-  @Transform(({ value }) => Number(value))
-  @IsNumber()
-  REDIS_PORT: number;
-
   @IsString()
-  REDIS_PASSWORD: string;
+  REDIS_PORT: string;
 
-  @Transform(({ value }) => value === 'true')
-  @IsBoolean()
   @IsOptional()
-  REDIS_TLS?: boolean;
+  @MinLength(12, { message: 'REDIS_PASSWORD must be at least 12 characters in production' })
+  REDIS_PASSWORD?: string;
+
+  @IsBooleanString()
+  REDIS_TLS: string;
 }
 
 @Injectable()
 export class RedisConfig {
-  private readonly config: RedisConfigSchema;
+  public readonly host: string;
+  public readonly port: number;
+  public readonly password?: string;
+  public readonly tlsEnabled: boolean;
 
   constructor(private readonly configService: ConfigService) {
     const validated = plainToInstance(RedisConfigSchema, {
-      REDIS_HOST: this.configService.get<string>('REDIS_HOST'),
-      REDIS_PORT: this.configService.get<string>('REDIS_PORT'),
-      REDIS_PASSWORD: this.configService.get<string>('REDIS_PASSWORD'),
-      REDIS_TLS: this.configService.get<string>('REDIS_TLS'),
+      REDIS_HOST: configService.get('REDIS_HOST'),
+      REDIS_PORT: configService.get('REDIS_PORT'),
+      REDIS_PASSWORD: configService.get('REDIS_PASSWORD'),
+      REDIS_TLS: configService.get('REDIS_TLS'),
     });
 
-    const errors = validateSync(validated, {
-      skipMissingProperties: false,
-    });
-
+    const errors = validateSync(validated, { whitelist: true });
     if (errors.length > 0) {
-      throw new Error(`Redis config validation failed: ${errors}`);
+      throw new Error(`Redis config validation failed: ${errors.toString()}`);
     }
 
-    this.config = validated;
-  }
+    if (process.env.NODE_ENV === 'production' && !validated.REDIS_PASSWORD) {
+      throw new Error('REDIS_PASSWORD is required in production');
+    }
 
-  get host() {
-    return this.config.REDIS_HOST;
-  }
-
-  get port() {
-    return this.config.REDIS_PORT;
-  }
-
-  get password() {
-    return this.config.REDIS_PASSWORD;
-  }
-
-  get tls() {
-    return this.config.REDIS_TLS;
+    this.host = validated.REDIS_HOST;
+    this.port = parseInt(validated.REDIS_PORT, 10);
+    this.password = validated.REDIS_PASSWORD;
+    this.tlsEnabled = validated.REDIS_TLS === 'true';
   }
 }

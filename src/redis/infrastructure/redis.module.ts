@@ -1,14 +1,13 @@
 // src/redis/infrastructure/redis.module.ts
 import { Module } from '@nestjs/common';
-import { redisProvider } from '../redis.provider';
 import { RedisService } from '../services/redis.service';
-import { ConfigModule } from '@nestjs/config';
-import { RedisHealthService } from 'src/health/redis-health.service';
 import { RedisConfig } from '../config/redis.config';
+import { redisProvider } from '../redis.provider';
+import { AppLogger } from 'src/shared/services/app-logger.service';
+//import { AppLogger } from '../../shared/logger/app.logger';
 
 @Module({
-  imports: [ConfigModule],
-  providers: [RedisService,RedisHealthService,RedisConfig],
-  exports: [RedisService,RedisHealthService],
+  providers: [RedisConfig, redisProvider, RedisService, AppLogger],
+  exports: [RedisService],
 })
 export class RedisModule {}
