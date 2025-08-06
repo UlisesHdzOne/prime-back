@@ -1,8 +1,13 @@
-// src/redis/config/redis.config.ts
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
-import { validateSync, MinLength, IsBooleanString, IsOptional, IsString } from 'class-validator';
+import {
+  validateSync,
+  MinLength,
+  IsBooleanString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 class RedisConfigSchema {
   @IsString()
@@ -12,7 +17,9 @@ class RedisConfigSchema {
   REDIS_PORT: string;
 
   @IsOptional()
-  @MinLength(12, { message: 'REDIS_PASSWORD must be at least 12 characters in production' })
+  @MinLength(12, {
+    message: 'REDIS_PASSWORD must be at least 12 characters in production',
+  })
   REDIS_PASSWORD?: string;
 
   @IsBooleanString()
@@ -36,7 +43,14 @@ export class RedisConfig {
 
     const errors = validateSync(validated, { whitelist: true });
     if (errors.length > 0) {
-      throw new Error(`Redis config validation failed: ${errors.map(e => e.toString()).join(', ')}`);
+      throw new Error(
+        `Redis config validation failed: ${errors
+          .map(
+            (e) =>
+              `${e.property}: ${Object.values(e.constraints || {}).join(', ')}`,
+          )
+          .join('; ')}`,
+      );
     }
 
     if (process.env.NODE_ENV === 'production' && !validated.REDIS_PASSWORD) {

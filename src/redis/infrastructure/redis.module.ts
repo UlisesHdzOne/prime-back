@@ -7,7 +7,7 @@ import { AppLogger } from 'src/shared/services/app-logger.service';
 //import { AppLogger } from '../../shared/logger/app.logger';
 
 @Module({
-  providers: [RedisConfig, redisProvider, RedisService, AppLogger],
+  providers: [RedisConfig, redisProvider, RedisService, AppLogger,],
   exports: [RedisService],
 })
 export class RedisModule {}

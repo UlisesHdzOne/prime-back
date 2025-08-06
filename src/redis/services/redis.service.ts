@@ -1,12 +1,13 @@
-// src/redis/services/redis.service.ts
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { IRedisClient } from '../interfaces/redis-client.interface';
-//import { AppLogger } from '../../shared/logger/app.logger';
 import retry from 'async-retry';
 import { AppLogger } from 'src/shared/services/app-logger.service';
+import { HealthCheckResult } from '@nestjs/terminus';
 
 @Injectable()
 export class RedisService implements IRedisClient, OnModuleDestroy {
+  private readonly operationTimeout = 5000;
+
   constructor(
     @Inject('REDIS_CLIENT') private readonly client: IRedisClient,
     private readonly logger: AppLogger,
@@ -22,9 +23,17 @@ export class RedisService implements IRedisClient, OnModuleDestroy {
     return this.executeWithRetry(() => this.client.get(key), 'GET');
   }
 
-  private logRetryMetrics(operation: string, success: boolean) {
-    // Aquí enviar métricas a tu sistema (Prometheus, Datadog, etc.)
-    this.logger.info(`Retry metrics for ${operation}: success = ${success}`);
+  private logRetryMetrics(
+    operation: string,
+    success: boolean,
+    durationMs: number,
+  ) {
+    this.logger.info(`Redis operation metrics`, {
+      operation,
+      success,
+      durationMs,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   async set(
@@ -52,12 +61,23 @@ export class RedisService implements IRedisClient, OnModuleDestroy {
   ): Promise<T> {
     return retry(
       async () => {
+        const start = Date.now();
         try {
-          const result = await fn();
-          this.logRetryMetrics(operation, true); // Reporta éxito
-          return result;
-        } catch (error) {
-          this.logRetryMetrics(operation, false); // Reporta fallo
+          const result = await Promise.race([
+            fn(),
+            new Promise<never>((_, reject) =>
+              setTimeout(
+                () => reject(new Error('Redis operation timeout')),
+                this.operationTimeout,
+              ),
+            ),
+          ]);
+          const duration = Date.now() - start;
+          this.logRetryMetrics(operation, true, duration);
+          return result as T;
+        } catch (error: any) {
+          const duration = Date.now() - start;
+          this.logRetryMetrics(operation, false, duration);
           this.logger.error(`${operation} failed: ${error.message}`);
           throw error;
         }
